@@ -20,7 +20,10 @@ Route::prefix('client')->group(function () {
     Route::post('register', [ClientAuthenticationController::class, 'register']);
     Route::post('verify-otp', [ClientAuthenticationController::class, 'verifyOtp']);
     Route::post('resend-otp', [ClientAuthenticationController::class, 'resendOtp']);
-    Route::post('logout', [ClientAuthenticationController::class, 'logout'])->middleware('auth:client-api');
+
+    Route::middleware('auth:client-api')->group(function () {
+        Route::post('logout', [ClientAuthenticationController::class, 'logout']);
+    });
 });
 
 Route::prefix('admin')->group(function () {
@@ -28,5 +31,8 @@ Route::prefix('admin')->group(function () {
     Route::post('register', [AdminAuthenticationController::class, 'register']);
     Route::post('verify-otp', [AdminAuthenticationController::class, 'verifyOtp']);
     Route::post('resend-otp', [AdminAuthenticationController::class, 'resendOtp']);
-    Route::post('logout', [AdminAuthenticationController::class, 'logout'])->middleware('auth:admin-api');
+
+    Route::middleware('auth:admin-api')->group(function () {
+        Route::post('logout', [AdminAuthenticationController::class, 'logout']);
+    });
 });

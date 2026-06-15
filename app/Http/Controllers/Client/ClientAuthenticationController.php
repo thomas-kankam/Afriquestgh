@@ -30,7 +30,7 @@ class ClientAuthenticationController extends Controller
             'phone_number' => $data['phone_number'] ?? null,
             'email' => $data['email'],
             'location' => $data['location'] ?? null,
-            'status' => 'active',
+            'status' => 'inactive',
             'is_verified' => false,
             'profile_image' => $data['profile_image'],
         ]);
