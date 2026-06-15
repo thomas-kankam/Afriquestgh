@@ -1,6 +1,7 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Admin\AdminAuthenticationController;
+use App\Http\Controllers\Client\ClientAuthenticationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,6 +15,18 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::prefix('client')->group(function () {
+    Route::post('login', [ClientAuthenticationController::class, 'login']);
+    Route::post('register', [ClientAuthenticationController::class, 'register']);
+    Route::post('verify-otp', [ClientAuthenticationController::class, 'verifyOtp']);
+    Route::post('resend-otp', [ClientAuthenticationController::class, 'resendOtp']);
+    Route::post('logout', [ClientAuthenticationController::class, 'logout'])->middleware('auth:client-api');
+});
+
+Route::prefix('admin')->group(function () {
+    Route::post('login', [AdminAuthenticationController::class, 'login']);
+    Route::post('register', [AdminAuthenticationController::class, 'register']);
+    Route::post('verify-otp', [AdminAuthenticationController::class, 'verifyOtp']);
+    Route::post('resend-otp', [AdminAuthenticationController::class, 'resendOtp']);
+    Route::post('logout', [AdminAuthenticationController::class, 'logout'])->middleware('auth:admin-api');
 });
