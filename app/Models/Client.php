@@ -27,7 +27,7 @@ class Client extends Actor
         'updated_at' => 'datetime',
         'verified_at' => 'datetime',
         'is_verified' => 'boolean',
-        'profile_image' => 'array',
+        'profile_image' => 'string',
         'status' => 'string',
     ];
 

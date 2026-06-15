@@ -23,7 +23,7 @@ class ClientAuthenticationController extends Controller
     {
         $data = $request->validated();
         $data['profile_image'] = static::base64ImageDecode($data['profile_image'] ?? null);
-        dd($data);
+
         $client = Client::create([
             'client_slug' => (string) Str::uuid(),
             'first_name' => $data['first_name'],
