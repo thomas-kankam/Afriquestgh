@@ -48,8 +48,12 @@ trait Helpers
         return $actor;
     }
 
-    protected static function base64ImageDecode(string $base64_image): ?string
+    protected static function base64ImageDecode(?string $base64_image): ?string
     {
+        if (! $base64_image) {
+            return null;
+        }
+
         if (! preg_match('/^data:image\/(png|jpg|jpeg|gif|webp);base64,/', $base64_image, $matches)) {
             return null;
         }
