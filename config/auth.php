@@ -41,16 +41,6 @@ return [
             'provider' => 'users',
         ],
 
-        'admins' => [
-            'driver' => 'session',
-            'provider' => 'admins',
-        ],
-
-        'clients' => [
-            'driver' => 'session',
-            'provider' => 'clients',
-        ],
-
         'client-api' => [
             'driver' => 'passport',
             'provider' => 'clients',
@@ -59,17 +49,7 @@ return [
         'admin-api' => [
             'driver' => 'passport',
             'provider' => 'admins',
-        ],
-
-        'roles' => [
-            'driver' => 'session',
-            'provider' => 'roles',
-        ],
-
-        'otps' => [
-            'driver' => 'session',
-            'provider' => 'otps',
-        ],
+        ]
     ],
 
     /*
@@ -102,15 +82,7 @@ return [
         'clients' => [
             'driver' => 'eloquent',
             'model' => App\Models\Client::class,
-        ],
-        'roles' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\Role::class,
-        ],
-        'otps' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\Otp::class,
-        ],
+        ]
     ],
 
     /*
