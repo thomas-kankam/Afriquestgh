@@ -10,8 +10,11 @@ class Client extends Actor
         'last_name',
         'phone_number',
         'email',
+        'is_verified',
+        'verified_at',
         'location',
         'status',
+        'profile_image',
     ];
 
     protected $hidden = [
@@ -19,11 +22,13 @@ class Client extends Actor
     ];
 
     protected $casts = [
-        'deleted_at'        => 'datetime',
-        'created_at'     => 'datetime',
-        'updated_at'     => 'datetime',
-        "profile_image"     => "array",
-        "status"            => "string",
+        'deleted_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'verified_at' => 'datetime',
+        'is_verified' => 'boolean',
+        'profile_image' => 'array',
+        'status' => 'string',
     ];
 
     public function getRouteKeyName(): string

@@ -17,7 +17,7 @@ class ClientPasswordController extends Controller
             return self::sendActorOtp(null, 'client', 'login');
         }
 
-        $type = $client->email_verified_at ? 'login' : 'registration';
+        $type = $client->is_verified ? 'login' : 'registration';
 
         return self::sendActorOtp($client, 'client', $type);
     }

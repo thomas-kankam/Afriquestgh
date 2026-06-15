@@ -22,7 +22,7 @@ class ClientAuthenticationController extends Controller
     public function register(ClientRegisterRequest $request): JsonResponse
     {
         $data = $request->validated();
-
+        $data['profile_image'] = static::base64ImageDecode($data['profile_image'] ?? null);
         $client = Client::create([
             'client_slug' => (string) Str::uuid(),
             'first_name' => $data['first_name'],
@@ -31,6 +31,8 @@ class ClientAuthenticationController extends Controller
             'email' => $data['email'],
             'location' => $data['location'] ?? null,
             'status' => 'active',
+            'is_verified' => false,
+            'profile_image' => $data['profile_image'],
         ]);
 
         return self::sendActorOtp($client, 'client', 'registration');
@@ -57,7 +59,9 @@ class ClientAuthenticationController extends Controller
             return self::sendActorOtp(null, 'client', 'login');
         }
 
-        return self::sendActorOtp($client, 'client', $request['type']);
+        $type = $client->is_verified ? 'login' : 'registration';
+
+        return self::sendActorOtp($client, 'client', $type);
     }
 
     public function logout(): JsonResponse

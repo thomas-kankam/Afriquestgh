@@ -106,6 +106,12 @@ trait AppNotifications
             );
         }
 
+        if ($guard === 'client' && $type === 'registration') {
+            $actor->is_verified = true;
+            $actor->verified_at = now();
+            $actor->save();
+        }
+
         $actor = self::apiToken($actor, $guard);
 
         $reason = $type === 'registration'

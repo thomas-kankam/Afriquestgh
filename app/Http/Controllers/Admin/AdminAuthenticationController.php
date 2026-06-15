@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AdminRegisterRequest;
 use App\Http\Requests\Auth\EmailOrPhoneRequest;
+use App\Http\Requests\Auth\ResendOtpRequest;
 use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Models\Admin;
 use Illuminate\Http\JsonResponse;
@@ -51,7 +52,7 @@ class AdminAuthenticationController extends Controller
         );
     }
 
-    public function resendOtp(EmailOrPhoneRequest $request): JsonResponse
+    public function resendOtp(ResendOtpRequest $request): JsonResponse
     {
         $admin = self::findActorByEmailOrPhone(Admin::class, $request->validated('emailOrPhone'));
 
@@ -59,7 +60,7 @@ class AdminAuthenticationController extends Controller
             return self::sendActorOtp(null, 'admin', 'login');
         }
 
-        $type = $admin->email_verified_at ? 'login' : 'registration';
+        $type = $request->validated('type') ?? 'login';
 
         return self::sendActorOtp($admin, 'admin', $type);
     }

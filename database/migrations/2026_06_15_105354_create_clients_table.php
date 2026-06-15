@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('location')->nullable();
             $table->string('status')->default('active');
             $table->longText('profile_image')->nullable();
+            $table->boolean('is_verified')->default(false);
+            $table->timestamp('verified_at')->nullable();
             $table->softDeletes();
             $table->timestamps();
 
