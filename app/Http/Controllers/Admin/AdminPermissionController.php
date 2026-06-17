@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Permission;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class AdminPermissionController extends Controller
 {
@@ -24,11 +25,19 @@ class AdminPermissionController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255|unique:permissions,name',
-            'label' => 'nullable|string|max:255',
+            'label' => 'required|string|max:255',
         ]);
 
-        $permission = Permission::create($data);
+        $name = self::permissionNameFromLabel($data['label']);
+
+        validator(['name' => $name], [
+            'name' => 'required|string|max:255|unique:permissions,name',
+        ])->validate();
+
+        $permission = Permission::create([
+            'name' => $name,
+            'label' => $data['label'],
+        ]);
 
         return self::apiResponse(false, 'Action Successful', (string) self::API_CREATED, 'Permission created', $permission->toApiArray());
     }
@@ -36,13 +45,27 @@ class AdminPermissionController extends Controller
     public function update(Request $request, Permission $permission): JsonResponse
     {
         $data = $request->validate([
-            'name' => 'sometimes|string|max:255|unique:permissions,name,'.$permission->id,
-            'label' => 'nullable|string|max:255',
+            'label' => 'sometimes|required|string|max:255',
         ]);
+
+        if (isset($data['label'])) {
+            $name = self::permissionNameFromLabel($data['label']);
+
+            validator(['name' => $name], [
+                'name' => 'required|string|max:255|unique:permissions,name,'.$permission->id,
+            ])->validate();
+
+            $data['name'] = $name;
+        }
 
         $permission->update($data);
 
         return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Permission updated', $permission->fresh()->toApiArray());
+    }
+
+    private static function permissionNameFromLabel(string $label): string
+    {
+        return Str::slug($label, '_');
     }
 
     public function destroy(Permission $permission): JsonResponse

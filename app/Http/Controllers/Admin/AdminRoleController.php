@@ -43,7 +43,7 @@ class AdminRoleController extends Controller
     public function update(Request $request, Role $role): JsonResponse
     {
         $data = $request->validate([
-            'name' => 'sometimes|string|max:255|unique:roles,name,'.$role->id,
+            'name' => 'sometimes|string|max:255|unique:roles,name,' . $role->id,
             'permissions' => 'sometimes|array|min:1',
             'permissions.*' => 'integer|exists:permissions,id',
         ]);

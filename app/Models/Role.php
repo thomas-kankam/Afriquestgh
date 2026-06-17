@@ -40,7 +40,6 @@ class Role extends Model
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'permission_ids' => $this->permissions->pluck('id')->values()->all(),
             'permissions' => $this->permissions->map(fn (Permission $permission) => $permission->toApiArray())->values()->all(),
         ];
     }
