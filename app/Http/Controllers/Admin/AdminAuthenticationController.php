@@ -24,11 +24,13 @@ class AdminAuthenticationController extends Controller
         $data = $request->validated();
         $admin = self::findActorByEmailOrPhone(Admin::class, $data['emailOrPhone']);
 
+        $type = self::resolveActorOtpType($admin, 'admin', $data['type'] ?? null);
+
         return self::verifyActorOtp(
-            otp: (int) $data['otp'],
+            otp: $data['otp'],
             actor: $admin,
             guard: 'admin',
-            type: $data['type']
+            type: $type
         );
     }
 

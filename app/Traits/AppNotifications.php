@@ -11,17 +11,28 @@ trait AppNotifications
 {
     use ApiTransformer, Helpers;
 
-    protected static function checkOtp(string $guard, int $otp, int $actor_id, string $type): array
+    protected static function resolveActorOtpType(?Actor $actor, string $guard, ?string $type): string
     {
-        $otpValue = str_pad((string) $otp, 6, '0', STR_PAD_LEFT);
+        if ($type !== null && $type !== '') {
+            return $type;
+        }
 
-        $query = Otp::query()
+        if ($actor && $guard === 'client' && ! $actor->is_verified) {
+            return 'registration';
+        }
+
+        return 'login';
+    }
+
+    protected static function checkOtp(string $guard, string $otp, int $actor_id, string $type): array
+    {
+        $otpValue = self::normalizeOtp($otp);
+
+        $validOtp = Otp::query()
             ->where('actor_id', $actor_id)
             ->where('guard', $guard)
             ->where('type', $type)
-            ->where('token', $otpValue);
-
-        $validOtp = (clone $query)
+            ->where('token', $otpValue)
             ->where('expires_at', '>', now())
             ->latest()
             ->first();
@@ -34,7 +45,27 @@ trait AppNotifications
             ];
         }
 
-        if ($query->where('expires_at', '<=', now())->exists()) {
+        $wrongTypeOtp = Otp::query()
+            ->where('actor_id', $actor_id)
+            ->where('guard', $guard)
+            ->where('token', $otpValue)
+            ->where('type', '!=', $type)
+            ->where('expires_at', '>', now())
+            ->exists();
+
+        if ($wrongTypeOtp) {
+            return ['status' => 'type_mismatch'];
+        }
+
+        $expiredOtp = Otp::query()
+            ->where('actor_id', $actor_id)
+            ->where('guard', $guard)
+            ->where('type', $type)
+            ->where('token', $otpValue)
+            ->where('expires_at', '<=', now())
+            ->exists();
+
+        if ($expiredOtp) {
             return ['status' => 'expired'];
         }
 
@@ -60,18 +91,18 @@ trait AppNotifications
             guard: $guard
         );
 
-        SendOtpEmailJob::dispatch($actor->email, $otp, $type);
+        SendOtpEmailJob::dispatch($actor->email, (int) $otp, $type);
 
         return self::apiResponse(
             in_error: false,
             message: 'Action Successful',
             reason: 'Otp sent to email successfully',
             status_code: (string) self::API_SUCCESS,
-            data: $actor->toArray()
+            data: array_merge($actor->toArray(), ['otp_type' => $type])
         );
     }
 
-    protected static function verifyActorOtp(int $otp, ?Actor $actor, string $guard, string $type): JsonResponse
+    protected static function verifyActorOtp(string $otp, ?Actor $actor, string $guard, string $type): JsonResponse
     {
         if (! $actor) {
             return self::apiResponse(
@@ -90,6 +121,16 @@ trait AppNotifications
                 in_error: true,
                 message: 'Action Unsuccessful',
                 reason: 'Otp expired',
+                status_code: (string) self::API_FAIL,
+                data: []
+            );
+        }
+
+        if ($result['status'] === 'type_mismatch') {
+            return self::apiResponse(
+                in_error: true,
+                message: 'Action Unsuccessful',
+                reason: 'Otp type mismatch. Use the same type as resend (registration or login).',
                 status_code: (string) self::API_FAIL,
                 data: []
             );

@@ -9,27 +9,24 @@ use Illuminate\Support\Str;
 
 trait Helpers
 {
-    protected static function otpCode(string $type, int $actor_id, string $channel, string $guard): int
+    protected static function normalizeOtp(string|int $otp): string
     {
-        $token    = random_int(111111, 999999);
+        return str_pad((string) $otp, 6, '0', STR_PAD_LEFT);
+    }
 
-        $bool = Otp::where('actor_id', $actor_id)
+    protected static function otpCode(string $type, int $actor_id, string $channel, string $guard): string
+    {
+        $token = (string) random_int(111111, 999999);
+
+        Otp::query()
+            ->where('actor_id', $actor_id)
             ->where('guard', $guard)
-            ->where('channel', $channel)
             ->where('type', $type)
-            ->where('expires_at', '>', now());
-
-        if ($bool->exists()) {
-            $bool = $bool->first();
-            $bool->token = (string) $token;
-            $bool->expires_at = now()->addMinutes(10);
-            $bool->save();
-
-            return $token;
-        }
+            ->where('channel', $channel)
+            ->delete();
 
         Otp::create([
-            'token' => (string) $token,
+            'token' => $token,
             'actor_id' => $actor_id,
             'guard' => $guard,
             'type' => $type,

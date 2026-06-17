@@ -12,9 +12,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
+        // Shared hosting: run via cron every minute (see .env.example). Use SMTP for mail —
+        // sendmail requires proc_open, which many hosts disable on CLI.
         $schedule->command('queue:work database --stop-when-empty --max-time=55 --tries=3')
-            ->everyMinute()
-            ->withoutOverlapping();
+            ->everyMinute();
     }
 
     /**

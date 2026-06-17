@@ -16,7 +16,7 @@ class VerifyOtpRequest extends FormRequest
         return [
             'emailOrPhone' => ['required', 'string', 'max:255'],
             'otp' => ['required', 'string', 'digits:6'],
-            'type' => ['required', 'string', 'in:login,registration'],
+            'type' => ['nullable', 'string', 'in:login,registration'],
         ];
     }
 }

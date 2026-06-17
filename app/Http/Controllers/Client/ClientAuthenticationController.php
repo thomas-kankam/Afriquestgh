@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\EmailOrPhoneRequest;
+use App\Http\Requests\Auth\ResendOtpRequest;
 use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Http\Requests\Client\ClientRegisterRequest;
 use App\Http\Requests\Client\UpdateProfileRequest;
@@ -45,15 +46,17 @@ class ClientAuthenticationController extends Controller
         $data = $request->validated();
         $client = self::findActorByEmailOrPhone(Client::class, $data['emailOrPhone']);
 
+        $type = self::resolveActorOtpType($client, 'client', $data['type'] ?? null);
+
         return self::verifyActorOtp(
-            otp: (int) $data['otp'],
+            otp: $data['otp'],
             actor: $client,
             guard: 'client',
-            type: $data['type']
+            type: $type
         );
     }
 
-    public function resendOtp(EmailOrPhoneRequest $request): JsonResponse
+    public function resendOtp(ResendOtpRequest $request): JsonResponse
     {
         $client = self::findActorByEmailOrPhone(Client::class, $request->validated('emailOrPhone'));
 
@@ -61,7 +64,8 @@ class ClientAuthenticationController extends Controller
             return self::sendActorOtp(null, 'client', 'login');
         }
 
-        $type = $client->is_verified ? 'login' : 'registration';
+        $type = $request->validated('type')
+            ?? ($client->is_verified ? 'login' : 'registration');
 
         return self::sendActorOtp($client, 'client', $type);
     }
