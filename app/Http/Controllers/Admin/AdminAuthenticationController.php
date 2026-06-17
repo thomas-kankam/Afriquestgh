@@ -3,14 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\AdminRegisterRequest;
+use App\Http\Requests\Admin\UpdateProfileRequest;
 use App\Http\Requests\Auth\EmailOrPhoneRequest;
 use App\Http\Requests\Auth\ResendOtpRequest;
 use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Models\Admin;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class AdminAuthenticationController extends Controller
 {
@@ -19,24 +17,6 @@ class AdminAuthenticationController extends Controller
         $admin = self::findActorByEmailOrPhone(Admin::class, $request->validated('emailOrPhone'));
 
         return self::sendActorOtp($admin, 'admin', 'login');
-    }
-
-    public function register(AdminRegisterRequest $request): JsonResponse
-    {
-        $data = $request->validated();
-
-        $admin = Admin::create([
-            'admin_slug' => (string) Str::uuid(),
-            'first_name' => $data['first_name'],
-            'last_name' => $data['last_name'] ?? null,
-            'phone_number' => $data['phone_number'] ?? null,
-            'email' => $data['email'],
-            'role_slug' => $data['role_slug'] ?? null,
-            'password' => Hash::make(Str::random(64)),
-            'status' => 'active',
-        ]);
-
-        return self::sendActorOtp($admin, 'admin', 'registration');
     }
 
     public function verifyOtp(VerifyOtpRequest $request): JsonResponse
@@ -75,6 +55,21 @@ class AdminAuthenticationController extends Controller
             reason: 'Logout successful',
             status_code: (string) self::API_SUCCESS,
             data: []
+        );
+    }
+
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
+    {
+        $data = collect($request->validated())->except(['phone_number'])->all();
+
+        if (isset($data['profile_image'])) {
+            $data['profile_image'] = static::base64ImageDecode($data['profile_image']) ?? $data['profile_image'];
+        }
+
+        return self::updateActorProfile(
+            request()->user(),
+            'admin',
+            $data
         );
     }
 }

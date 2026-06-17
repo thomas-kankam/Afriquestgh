@@ -11,25 +11,34 @@ trait AppNotifications
 {
     use ApiTransformer, Helpers;
 
-    protected static function checkOtp(string $guard, int $otp, int $actor_id, string $type): string
+    protected static function checkOtp(string $guard, int $otp, int $actor_id, string $type): array
     {
-        $token = Otp::query()
+        $otpValue = str_pad((string) $otp, 6, '0', STR_PAD_LEFT);
+
+        $query = Otp::query()
             ->where('actor_id', $actor_id)
             ->where('guard', $guard)
             ->where('type', $type)
-            ->where('token', $otp)
+            ->where('token', $otpValue);
+
+        $validOtp = (clone $query)
+            ->where('expires_at', '>', now())
             ->latest()
             ->first();
 
-        if (! $token) {
-            return self::API_NOT_FOUND;
+        if ($validOtp) {
+            return [
+                'status' => 'valid',
+                'channel' => $validOtp->channel,
+                'otp' => $validOtp,
+            ];
         }
 
-        if ($token->expires_at->isPast()) {
-            return self::API_FAIL;
+        if ($query->where('expires_at', '<=', now())->exists()) {
+            return ['status' => 'expired'];
         }
 
-        return $token->channel;
+        return ['status' => 'not_found'];
     }
 
     public static function sendActorOtp(?Actor $actor, string $guard, string $type): JsonResponse
@@ -40,16 +49,6 @@ trait AppNotifications
                 message: 'Action Unsuccessful',
                 reason: 'User cannot be found',
                 status_code: (string) self::API_NOT_FOUND,
-                data: []
-            );
-        }
-
-        if (! in_array($guard, ['admin', 'client'], true)) {
-            return self::apiResponse(
-                in_error: true,
-                message: 'Action Unsuccessful',
-                reason: 'Invalid guard',
-                status_code: (string) self::API_FAIL,
                 data: []
             );
         }
@@ -84,9 +83,9 @@ trait AppNotifications
             );
         }
 
-        $channel = self::checkOtp(guard: $guard, otp: $otp, actor_id: $actor->id, type: $type);
+        $result = self::checkOtp(guard: $guard, otp: $otp, actor_id: $actor->id, type: $type);
 
-        if ($channel === self::API_FAIL) {
+        if ($result['status'] === 'expired') {
             return self::apiResponse(
                 in_error: true,
                 message: 'Action Unsuccessful',
@@ -96,7 +95,7 @@ trait AppNotifications
             );
         }
 
-        if ($channel === self::API_NOT_FOUND) {
+        if ($result['status'] === 'not_found') {
             return self::apiResponse(
                 in_error: true,
                 message: 'Action Unsuccessful',
@@ -106,6 +105,8 @@ trait AppNotifications
             );
         }
 
+        $result['otp']->delete();
+
         if ($guard === 'client' && $type === 'registration') {
             $actor->is_verified = true;
             $actor->verified_at = now();
@@ -113,18 +114,24 @@ trait AppNotifications
             $actor->save();
         }
 
-        $actor = self::apiToken($actor, $guard);
+        $accessToken = self::apiToken($actor, $guard);
 
         $reason = $type === 'registration'
             ? 'Account verified successfully'
             : 'Login successful';
+
+        $responseData = $guard === 'admin' && $actor instanceof \App\Models\Admin
+            ? $actor->fresh(['role.permissions'])->toAuthArray()
+            : $actor->fresh()->toArray();
+
+        $responseData['token'] = $accessToken;
 
         return self::apiResponse(
             in_error: false,
             message: 'Action Successful',
             reason: $reason,
             status_code: (string) self::API_SUCCESS,
-            data: $actor->toArray()
+            data: $responseData
         );
     }
 }

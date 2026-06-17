@@ -1,0 +1,69 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Payment;
+use App\Services\BookingService;
+use App\Services\PaystackService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class PaymentController extends Controller
+{
+    public function __construct(
+        protected PaystackService $paystack,
+        protected BookingService $bookingService
+    ) {}
+
+    public function callback(Request $request): JsonResponse
+    {
+        $reference = $request->query('reference') ?? $request->input('reference');
+
+        if (! $reference) {
+            return self::apiResponse(true, 'Action Unsuccessful', (string) self::API_FAIL, 'Missing payment reference', []);
+        }
+
+        try {
+            $data = $this->paystack->verifyTransaction($reference);
+
+            if (($data['status'] ?? '') === 'success') {
+                $this->bookingService->markPaidByReference($reference, $data);
+            }
+
+            $payment = Payment::query()->where('paystack_reference', $reference)->with('booking.tour')->first();
+
+            return self::apiResponse(
+                false,
+                'Action Successful',
+                (string) self::API_SUCCESS,
+                'Payment verified',
+                [
+                    'reference' => $reference,
+                    'status' => $data['status'] ?? 'unknown',
+                    'booking' => $payment?->booking?->toBookingArray(),
+                ]
+            );
+        } catch (\Throwable $e) {
+            return self::apiResponse(true, 'Action Unsuccessful', (string) self::API_FAIL, $e->getMessage(), []);
+        }
+    }
+
+    public function webhook(Request $request): JsonResponse
+    {
+        $signature = $request->header('x-paystack-signature');
+        $payload = $request->getContent();
+
+        if (! $this->paystack->validateWebhookSignature($payload, $signature)) {
+            return response()->json(['message' => 'Invalid signature'], 400);
+        }
+
+        $event = $request->input('event');
+        $data = $request->input('data', []);
+
+        if ($event === 'charge.success' && ! empty($data['reference'])) {
+            $this->bookingService->markPaidByReference($data['reference'], $data);
+        }
+
+        return response()->json(['message' => 'Webhook received']);
+    }
+}

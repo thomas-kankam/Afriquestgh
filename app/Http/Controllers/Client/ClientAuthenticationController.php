@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\EmailOrPhoneRequest;
 use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Http\Requests\Client\ClientRegisterRequest;
+use App\Http\Requests\Client\UpdateProfileRequest;
 use App\Models\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
@@ -75,6 +76,21 @@ class ClientAuthenticationController extends Controller
             reason: 'Logout successful',
             status_code: (string) self::API_SUCCESS,
             data: []
+        );
+    }
+
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
+    {
+        $data = collect($request->validated())->except(['phone_number'])->all();
+
+        if (isset($data['profile_image'])) {
+            $data['profile_image'] = static::base64ImageDecode($data['profile_image']) ?? $data['profile_image'];
+        }
+
+        return self::updateActorProfile(
+            request()->user(),
+            'client',
+            $data
         );
     }
 }

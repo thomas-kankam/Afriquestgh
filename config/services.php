@@ -31,4 +31,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'paystack' => [
+        'secret_key' => env('PAYSTACK_SECRET_KEY'),
+        'public_key' => env('PAYSTACK_PUBLIC_KEY'),
+        'callback_url' => env('PAYSTACK_CALLBACK_URL', env('APP_URL').'/api/payment/callback'),
+        'webhook_url' => env('PAYSTACK_WEBHOOK_URL', env('APP_URL').'/api/payment/webhook'),
+    ],
+
 ];

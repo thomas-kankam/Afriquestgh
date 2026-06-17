@@ -13,7 +13,6 @@ class Actor extends Authenticatable
     use HasFactory, SoftDeletes, HasApiTokens, Notifiable, Helpers;
 
     protected $hidden = [
-        'password',
         'remember_token',
         'deleted_at',
     ];

@@ -2,10 +2,89 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tour extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'tour_slug', 'name', 'location', 'country', 'country_code', 'categories',
+        'status', 'featured', 'duration_days', 'duration_label', 'group_size_min',
+        'group_size_max', 'group_size_label', 'price_amount', 'price_currency', 'price_label',
+        'rating', 'review_count', 'badge', 'badge_variant', 'cover_image_url',
+        'gallery_image_urls', 'description', 'highlights', 'itinerary', 'included',
+        'not_included', 'departure_dates', 'booking_settings', 'created_by_admin_slug',
+    ];
+
+    protected $casts = [
+        'categories' => 'array',
+        'featured' => 'boolean',
+        'gallery_image_urls' => 'array',
+        'highlights' => 'array',
+        'itinerary' => 'array',
+        'included' => 'array',
+        'not_included' => 'array',
+        'departure_dates' => 'array',
+        'booking_settings' => 'array',
+        'price_amount' => 'decimal:2',
+        'rating' => 'decimal:1',
+    ];
+
+    public function getRouteKeyName(): string
+    {
+        return 'tour_slug';
+    }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class, 'tour_slug', 'tour_slug');
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('status', 'active');
+    }
+
+    public function toListingArray(): array
+    {
+        return [
+            'slug' => $this->tour_slug,
+            'name' => $this->name,
+            'location' => $this->location,
+            'country' => $this->country,
+            'countryCode' => $this->country_code,
+            'categories' => $this->categories ?? [],
+            'status' => $this->status,
+            'featured' => $this->featured,
+            'durationDays' => $this->duration_days,
+            'durationLabel' => $this->duration_label,
+            'groupSizeMin' => $this->group_size_min,
+            'groupSizeMax' => $this->group_size_max,
+            'groupSizeLabel' => $this->group_size_label,
+            'priceAmount' => (float) $this->price_amount,
+            'priceCurrency' => $this->price_currency,
+            'priceLabel' => $this->price_label,
+            'rating' => (float) $this->rating,
+            'reviewCount' => $this->review_count,
+            'badge' => $this->badge,
+            'badgeVariant' => $this->badge_variant,
+            'coverImageUrl' => $this->cover_image_url,
+            'galleryImageUrls' => $this->gallery_image_urls ?? [],
+            'description' => $this->description,
+            'highlights' => $this->highlights ?? [],
+            'itinerary' => $this->itinerary ?? [],
+            'included' => $this->included ?? [],
+            'notIncluded' => $this->not_included ?? [],
+            'departureDates' => $this->departure_dates ?? [],
+            'bookingSettings' => $this->booking_settings ?? [],
+            'createdAt' => $this->created_at,
+            'updatedAt' => $this->updated_at,
+        ];
+    }
 }

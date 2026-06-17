@@ -18,7 +18,6 @@ return new class extends Migration
             $table->string('last_name')->nullable();
             $table->string('phone_number')->nullable();
             $table->string('email')->unique();
-            $table->string('password');
             $table->string('status')->default('inactive');
             $table->longText('profile_image')->nullable();
             $table->string('role_slug')->nullable();

@@ -1,19 +1,26 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminAuthenticationController;
+use App\Http\Controllers\Admin\AdminBookingController;
+use App\Http\Controllers\Admin\AdminClientController;
+use App\Http\Controllers\Admin\AdminContactController;
+use App\Http\Controllers\Admin\AdminListingController;
+use App\Http\Controllers\Admin\AdminPermissionController;
+use App\Http\Controllers\Admin\AdminRoleController;
+use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Client\ClientAuthenticationController;
+use App\Http\Controllers\Client\ClientBookingController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ListingController;
+use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
+Route::get('listings', [ListingController::class, 'index']);
+Route::get('listings/{listing}', [ListingController::class, 'show']);
+Route::post('contacts', [ContactController::class, 'store']);
+
+Route::post('payment/callback', [PaymentController::class, 'callback']);
+Route::post('payment/webhook', [PaymentController::class, 'webhook']);
 
 Route::prefix('client')->group(function () {
     Route::post('login', [ClientAuthenticationController::class, 'login']);
@@ -23,16 +30,73 @@ Route::prefix('client')->group(function () {
 
     Route::middleware('auth:client-api')->group(function () {
         Route::post('logout', [ClientAuthenticationController::class, 'logout']);
+        Route::post('update-profile', [ClientAuthenticationController::class, 'updateProfile']);
+
+        Route::get('bookings', [ClientBookingController::class, 'index']);
+        Route::get('bookings/{booking}', [ClientBookingController::class, 'show']);
+        Route::post('bookings', [ClientBookingController::class, 'store']);
+        Route::put('bookings/{booking}', [ClientBookingController::class, 'update']);
+        Route::delete('bookings/{booking}', [ClientBookingController::class, 'destroy']);
     });
 });
 
 Route::prefix('admin')->group(function () {
     Route::post('login', [AdminAuthenticationController::class, 'login']);
-    Route::post('register', [AdminAuthenticationController::class, 'register']);
     Route::post('verify-otp', [AdminAuthenticationController::class, 'verifyOtp']);
     Route::post('resend-otp', [AdminAuthenticationController::class, 'resendOtp']);
 
     Route::middleware('auth:admin-api')->group(function () {
         Route::post('logout', [AdminAuthenticationController::class, 'logout']);
+        Route::post('update-profile', [AdminAuthenticationController::class, 'updateProfile']);
+
+        Route::middleware('admin.permission:listing_management')->group(function () {
+            Route::get('listings', [AdminListingController::class, 'index']);
+            Route::get('listings/{listing}', [AdminListingController::class, 'show']);
+            Route::post('listings', [AdminListingController::class, 'store']);
+            Route::put('listings/{listing}', [AdminListingController::class, 'update']);
+            Route::patch('listings/{listing}/status', [AdminListingController::class, 'updateStatus']);
+            Route::delete('listings/{listing}', [AdminListingController::class, 'destroy']);
+        });
+
+        Route::middleware('admin.permission:booking_management')->group(function () {
+            Route::get('bookings', [AdminBookingController::class, 'index']);
+            Route::get('bookings/{booking}', [AdminBookingController::class, 'show']);
+            Route::post('bookings', [AdminBookingController::class, 'store']);
+            Route::put('bookings/{booking}', [AdminBookingController::class, 'update']);
+            Route::delete('bookings/{booking}', [AdminBookingController::class, 'destroy']);
+        });
+
+        Route::middleware('admin.permission:client_management')->group(function () {
+            Route::get('clients', [AdminClientController::class, 'index']);
+            Route::get('clients/{client}', [AdminClientController::class, 'show']);
+            Route::post('clients', [AdminClientController::class, 'store']);
+            Route::put('clients/{client}', [AdminClientController::class, 'update']);
+            Route::delete('clients/{client}', [AdminClientController::class, 'destroy']);
+        });
+
+        Route::middleware('admin.permission:user_management')->group(function () {
+            Route::get('admins', [AdminUserController::class, 'index']);
+            Route::get('admins/{admin}', [AdminUserController::class, 'show']);
+            Route::post('admins', [AdminUserController::class, 'store']);
+            Route::put('admins/{admin}', [AdminUserController::class, 'update']);
+            Route::delete('admins/{admin}', [AdminUserController::class, 'destroy']);
+        });
+
+        Route::middleware('admin.permission:role_management')->group(function () {
+            Route::get('roles', [AdminRoleController::class, 'index']);
+            Route::get('roles/{role}', [AdminRoleController::class, 'show']);
+            Route::post('roles', [AdminRoleController::class, 'store']);
+            Route::put('roles/{role}', [AdminRoleController::class, 'update']);
+            Route::delete('roles/{role}', [AdminRoleController::class, 'destroy']);
+            Route::get('permissions', [AdminPermissionController::class, 'index']);
+            Route::get('permissions/{permission}', [AdminPermissionController::class, 'show']);
+        });
+
+        Route::middleware('admin.permission:contact_management')->group(function () {
+            Route::get('contacts', [AdminContactController::class, 'index']);
+            Route::get('contacts/{contact}', [AdminContactController::class, 'show']);
+            Route::put('contacts/{contact}', [AdminContactController::class, 'update']);
+            Route::delete('contacts/{contact}', [AdminContactController::class, 'destroy']);
+        });
     });
 });

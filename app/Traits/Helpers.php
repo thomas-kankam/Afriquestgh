@@ -12,7 +12,6 @@ trait Helpers
     protected static function otpCode(string $type, int $actor_id, string $channel, string $guard): int
     {
         $token    = random_int(111111, 999999);
-        $new_time = strtotime('+10 minutes');
 
         $bool = Otp::where('actor_id', $actor_id)
             ->where('guard', $guard)
@@ -21,31 +20,29 @@ trait Helpers
             ->where('expires_at', '>', now());
 
         if ($bool->exists()) {
-            $bool        = $bool->first();
-            $bool->token = $token;
+            $bool = $bool->first();
+            $bool->token = (string) $token;
+            $bool->expires_at = now()->addMinutes(10);
             $bool->save();
 
             return $token;
         }
 
         Otp::create([
-            "token"      => $token,
-            "actor_id"   => $actor_id,
-            "guard"      => $guard,
-            "type"       => $type,
-            "channel"    => $channel,
-            "expires_at" => date('Y-m-d H:i:s', $new_time),
+            'token' => (string) $token,
+            'actor_id' => $actor_id,
+            'guard' => $guard,
+            'type' => $type,
+            'channel' => $channel,
+            'expires_at' => now()->addMinutes(10),
         ]);
 
         return $token;
     }
 
-    protected static function apiToken(Actor $actor, string $oauth_name): Actor
+    protected static function apiToken(Actor $actor, string $oauth_name): string
     {
-        $accessToken  = $actor->createToken($oauth_name)->accessToken;
-        $actor->token = $accessToken;
-
-        return $actor;
+        return $actor->createToken($oauth_name)->accessToken;
     }
 
     protected static function base64ImageDecode(?string $base64_image): ?string
