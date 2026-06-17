@@ -15,8 +15,23 @@ class VerifyOtpRequest extends FormRequest
     {
         return [
             'emailOrPhone' => ['required', 'string', 'max:255'],
-            'otp' => ['required', 'string', 'digits:6'],
+            'otp' => ['required', 'digits:6'],
             'type' => ['nullable', 'string', 'in:login,registration'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('otp')) {
+            $this->merge([
+                'otp' => str_pad((string) $this->input('otp'), 6, '0', STR_PAD_LEFT),
+            ]);
+        }
+
+        if ($this->has('emailOrPhone')) {
+            $this->merge([
+                'emailOrPhone' => trim((string) $this->input('emailOrPhone')),
+            ]);
+        }
     }
 }

@@ -11,24 +11,34 @@ trait AppNotifications
 {
     use ApiTransformer, Helpers;
 
+    protected static function isClientVerified(?Actor $actor): bool
+    {
+        if (! $actor instanceof \App\Models\Client) {
+            return false;
+        }
+
+        return (bool) $actor->is_verified || $actor->verified_at !== null;
+    }
+
     protected static function resolveActorOtpType(?Actor $actor, string $guard): string
     {
-        if ($guard === 'client' && $actor && ! $actor->verified_at) {
+        if ($guard === 'client' && $actor && ! self::isClientVerified($actor)) {
             return 'registration';
         }
 
         return 'login';
     }
 
-    protected static function checkOtp(string $guard, string $otp, int $actor_id, string $type): array
+    protected static function checkOtp(string $guard, string $otp, int $actor_id): array
     {
+        $otpValue = self::normalizeOtp($otp);
+
         $validOtp = Otp::query()
             ->where('actor_id', $actor_id)
             ->where('guard', $guard)
-            ->where('token', $otp)
+            ->where('token', $otpValue)
             ->where('expires_at', '>', now())
-            ->when($type, fn($query) => $query->where('type', $type))
-            ->latest()
+            ->latest('id')
             ->first();
 
         if ($validOtp) {
@@ -43,8 +53,7 @@ trait AppNotifications
         $expiredOtp = Otp::query()
             ->where('actor_id', $actor_id)
             ->where('guard', $guard)
-            ->where('token', $otp)
-            ->when($type, fn($query) => $query->where('type', $type))
+            ->where('token', $otpValue)
             ->where('expires_at', '<=', now())
             ->exists();
 
@@ -97,9 +106,9 @@ trait AppNotifications
             );
         }
 
-        $type = self::resolveActorOtpType($actor, $guard);
+        $actor->refresh();
 
-        $result = self::checkOtp(guard: $guard, otp: $otp, actor_id: $actor->id, type: $type);
+        $result = self::checkOtp(guard: $guard, otp: self::normalizeOtp($otp), actor_id: $actor->id);
 
         if ($result['status'] === 'expired') {
             return self::apiResponse(
@@ -122,17 +131,20 @@ trait AppNotifications
         }
 
         $verifiedType = $result['type'];
+        $shouldActivate = $guard === 'client'
+            && $verifiedType === 'registration'
+            && ! self::isClientVerified($actor);
 
-        if ($guard === 'client' && $verifiedType === 'registration') {
+        $accessToken = self::apiToken($actor, $guard);
+
+        if ($shouldActivate) {
             $actor->is_verified = true;
             $actor->verified_at = now();
             $actor->status = 'active';
             $actor->save();
         }
 
-        $accessToken = self::apiToken($actor, $guard);
-
-        $reason = $verifiedType === 'registration'
+        $reason = $shouldActivate
             ? 'Account verified successfully'
             : 'Login successful';
 
