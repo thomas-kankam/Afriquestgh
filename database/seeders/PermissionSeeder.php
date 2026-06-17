@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class PermissionSeeder extends Seeder
 {
@@ -28,12 +27,11 @@ class PermissionSeeder extends Seeder
         }
 
         $role = Role::query()->updateOrCreate(
-            ['role_slug' => 'super-admin'],
             ['name' => 'Super Admin']
         );
 
         $role->permissions()->sync(
-            Permission::query()->pluck('name')->all()
+            Permission::query()->pluck('id')->all()
         );
     }
 }

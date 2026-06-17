@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('status')->default('inactive');
             $table->longText('profile_image')->nullable();
-            $table->string('role_slug')->nullable();
+            $table->foreignId('role_id')->nullable()->constrained('roles')->nullOnDelete();
             $table->softDeletes();
             $table->timestamps();
 
@@ -29,7 +29,7 @@ return new class extends Migration
             $table->index('email', 'admins_email_idx');
             $table->index('status', 'admins_status_idx');
             $table->index('deleted_at', 'admins_deleted_at_idx');
-            $table->index('role_slug', 'admins_role_slug_idx');
+            $table->index('role_id', 'admins_role_id_idx');
         });
     }
 

@@ -17,13 +17,11 @@ return new class extends Migration
 
         Schema::create('role_permissions', function (Blueprint $table) {
             $table->id();
-            $table->string('role_slug');
-            $table->string('permission_name');
+            $table->foreignId('role_id')->constrained('roles')->cascadeOnDelete();
+            $table->foreignId('permission_id')->constrained('permissions')->cascadeOnDelete();
             $table->timestamps();
 
-            $table->unique(['role_slug', 'permission_name']);
-            $table->foreign('role_slug')->references('role_slug')->on('roles')->cascadeOnDelete();
-            $table->foreign('permission_name')->references('name')->on('permissions')->cascadeOnDelete();
+            $table->unique(['role_id', 'permission_id']);
         });
     }
 

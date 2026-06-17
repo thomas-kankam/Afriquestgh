@@ -19,6 +19,8 @@ class AdminUserController extends Controller
 
     public function show(Admin $admin): JsonResponse
     {
+        $admin->load('role.permissions');
+
         return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Admin retrieved', $admin->toAuthArray());
     }
 
@@ -27,7 +29,7 @@ class AdminUserController extends Controller
         $data = $request->validate([
             'first_name' => 'required|string',
             'email' => 'required|email|unique:admins,email',
-            'role_slug' => 'required|string|exists:roles,role_slug',
+            'role_id' => 'required|integer|exists:roles,id',
             'last_name' => 'nullable|string',
             'phone_number' => 'nullable|string',
         ]);
@@ -38,11 +40,11 @@ class AdminUserController extends Controller
             'last_name' => $data['last_name'] ?? null,
             'phone_number' => $data['phone_number'] ?? null,
             'email' => $data['email'],
-            'role_slug' => $data['role_slug'],
+            'role_id' => $data['role_id'],
             'status' => 'active',
         ]);
 
-        return self::apiResponse(false, 'Action Successful', (string) self::API_CREATED, 'Admin created', $admin->toAuthArray());
+        return self::apiResponse(false, 'Action Successful', (string) self::API_CREATED, 'Admin created', $admin->fresh(['role.permissions'])->toAuthArray());
     }
 
     public function update(Request $request, Admin $admin): JsonResponse
@@ -52,13 +54,13 @@ class AdminUserController extends Controller
             'last_name' => 'nullable|string',
             'phone_number' => 'nullable|string',
             'email' => 'sometimes|email|unique:admins,email,'.$admin->id,
-            'role_slug' => 'sometimes|string|exists:roles,role_slug',
+            'role_id' => 'sometimes|integer|exists:roles,id',
             'status' => 'sometimes|string',
         ]);
 
         $admin->update($data);
 
-        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Admin updated', $admin->fresh()->toAuthArray());
+        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Admin updated', $admin->fresh(['role.permissions'])->toAuthArray());
     }
 
     public function destroy(Admin $admin): JsonResponse

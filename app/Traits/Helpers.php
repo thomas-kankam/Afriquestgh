@@ -9,21 +9,9 @@ use Illuminate\Support\Str;
 
 trait Helpers
 {
-    protected static function normalizeOtp(string|int $otp): string
-    {
-        return str_pad((string) $otp, 6, '0', STR_PAD_LEFT);
-    }
-
     protected static function otpCode(string $type, int $actor_id, string $channel, string $guard): string
     {
         $token = (string) random_int(111111, 999999);
-
-        Otp::query()
-            ->where('actor_id', $actor_id)
-            ->where('guard', $guard)
-            ->where('type', $type)
-            ->where('channel', $channel)
-            ->delete();
 
         Otp::create([
             'token' => $token,

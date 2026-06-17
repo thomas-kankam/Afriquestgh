@@ -6,17 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class AdminRoleController extends Controller
 {
     public function index(): JsonResponse
     {
-        $roles = Role::with('permissions')->get()->map(fn ($role) => [
-            'roleSlug' => $role->role_slug,
-            'name' => $role->name,
-            'permissions' => $role->permissions->pluck('name'),
-        ]);
+        $roles = Role::with('permissions')->get()->map->toApiArray();
 
         return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Roles retrieved', $roles->all());
     }
@@ -25,41 +20,32 @@ class AdminRoleController extends Controller
     {
         $role->load('permissions');
 
-        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Role retrieved', [
-            'roleSlug' => $role->role_slug,
-            'name' => $role->name,
-            'permissions' => $role->permissions->pluck('name'),
-        ]);
+        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Role retrieved', $role->toApiArray());
     }
 
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'permissions' => 'required|array',
-            'permissions.*' => 'string|exists:permissions,name',
+            'name' => 'required|string|max:255|unique:roles,name',
+            'permissions' => 'required|array|min:1',
+            'permissions.*' => 'integer|exists:permissions,id',
         ]);
 
         $role = Role::create([
-            'role_slug' => (string) Str::uuid(),
             'name' => $data['name'],
         ]);
 
         $role->permissions()->sync($data['permissions']);
 
-        return self::apiResponse(false, 'Action Successful', (string) self::API_CREATED, 'Role created', [
-            'roleSlug' => $role->role_slug,
-            'name' => $role->name,
-            'permissions' => $data['permissions'],
-        ]);
+        return self::apiResponse(false, 'Action Successful', (string) self::API_CREATED, 'Role created', $role->fresh('permissions')->toApiArray());
     }
 
     public function update(Request $request, Role $role): JsonResponse
     {
         $data = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'permissions' => 'sometimes|array',
-            'permissions.*' => 'string|exists:permissions,name',
+            'name' => 'sometimes|string|max:255|unique:roles,name,'.$role->id,
+            'permissions' => 'sometimes|array|min:1',
+            'permissions.*' => 'integer|exists:permissions,id',
         ]);
 
         if (isset($data['name'])) {
@@ -70,17 +56,16 @@ class AdminRoleController extends Controller
             $role->permissions()->sync($data['permissions']);
         }
 
-        $role->load('permissions');
-
-        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Role updated', [
-            'roleSlug' => $role->role_slug,
-            'name' => $role->name,
-            'permissions' => $role->permissions->pluck('name'),
-        ]);
+        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Role updated', $role->fresh('permissions')->toApiArray());
     }
 
     public function destroy(Role $role): JsonResponse
     {
+        if ($role->admins()->exists()) {
+            return self::apiResponse(true, 'Action Unsuccessful', (string) self::API_FAIL, 'Role is assigned to one or more admins', []);
+        }
+
+        $role->permissions()->detach();
         $role->delete();
 
         return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Role deleted', []);

@@ -11,13 +11,9 @@ trait AppNotifications
 {
     use ApiTransformer, Helpers;
 
-    protected static function resolveActorOtpType(?Actor $actor, string $guard, ?string $type): string
+    protected static function resolveActorOtpType(?Actor $actor, string $guard): string
     {
-        if ($type !== null && $type !== '') {
-            return $type;
-        }
-
-        if ($actor && $guard === 'client' && ! $actor->is_verified) {
+        if ($guard === 'client' && $actor && ! $actor->verified_at) {
             return 'registration';
         }
 
@@ -26,14 +22,12 @@ trait AppNotifications
 
     protected static function checkOtp(string $guard, string $otp, int $actor_id, string $type): array
     {
-        $otpValue = self::normalizeOtp($otp);
-
         $validOtp = Otp::query()
             ->where('actor_id', $actor_id)
             ->where('guard', $guard)
-            ->where('type', $type)
-            ->where('token', $otpValue)
+            ->where('token', $otp)
             ->where('expires_at', '>', now())
+            ->when($type, fn($query) => $query->where('type', $type))
             ->latest()
             ->first();
 
@@ -42,26 +36,15 @@ trait AppNotifications
                 'status' => 'valid',
                 'channel' => $validOtp->channel,
                 'otp' => $validOtp,
+                'type' => $validOtp->type,
             ];
-        }
-
-        $wrongTypeOtp = Otp::query()
-            ->where('actor_id', $actor_id)
-            ->where('guard', $guard)
-            ->where('token', $otpValue)
-            ->where('type', '!=', $type)
-            ->where('expires_at', '>', now())
-            ->exists();
-
-        if ($wrongTypeOtp) {
-            return ['status' => 'type_mismatch'];
         }
 
         $expiredOtp = Otp::query()
             ->where('actor_id', $actor_id)
             ->where('guard', $guard)
-            ->where('type', $type)
-            ->where('token', $otpValue)
+            ->where('token', $otp)
+            ->when($type, fn($query) => $query->where('type', $type))
             ->where('expires_at', '<=', now())
             ->exists();
 
@@ -102,7 +85,7 @@ trait AppNotifications
         );
     }
 
-    protected static function verifyActorOtp(string $otp, ?Actor $actor, string $guard, string $type): JsonResponse
+    protected static function verifyActorOtp(string $otp, ?Actor $actor, string $guard): JsonResponse
     {
         if (! $actor) {
             return self::apiResponse(
@@ -114,6 +97,8 @@ trait AppNotifications
             );
         }
 
+        $type = self::resolveActorOtpType($actor, $guard);
+
         $result = self::checkOtp(guard: $guard, otp: $otp, actor_id: $actor->id, type: $type);
 
         if ($result['status'] === 'expired') {
@@ -121,16 +106,6 @@ trait AppNotifications
                 in_error: true,
                 message: 'Action Unsuccessful',
                 reason: 'Otp expired',
-                status_code: (string) self::API_FAIL,
-                data: []
-            );
-        }
-
-        if ($result['status'] === 'type_mismatch') {
-            return self::apiResponse(
-                in_error: true,
-                message: 'Action Unsuccessful',
-                reason: 'Otp type mismatch. Use the same type as resend (registration or login).',
                 status_code: (string) self::API_FAIL,
                 data: []
             );
@@ -146,9 +121,9 @@ trait AppNotifications
             );
         }
 
-        $result['otp']->delete();
+        $verifiedType = $result['type'];
 
-        if ($guard === 'client' && $type === 'registration') {
+        if ($guard === 'client' && $verifiedType === 'registration') {
             $actor->is_verified = true;
             $actor->verified_at = now();
             $actor->status = 'active';
@@ -157,7 +132,7 @@ trait AppNotifications
 
         $accessToken = self::apiToken($actor, $guard);
 
-        $reason = $type === 'registration'
+        $reason = $verifiedType === 'registration'
             ? 'Account verified successfully'
             : 'Login successful';
 

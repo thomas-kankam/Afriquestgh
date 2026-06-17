@@ -8,7 +8,7 @@ class Admin extends Actor
 {
     protected $fillable = [
         'admin_slug',
-        'role_slug',
+        'role_id',
         'first_name',
         'last_name',
         'phone_number',
@@ -29,19 +29,14 @@ class Admin extends Actor
         "status"            => "string",
     ];
 
-    public function getRouteKeyName(): string
-    {
-        return "admin_slug";
-    }
-
     public function role(): BelongsTo
     {
-        return $this->belongsTo(Role::class, 'role_slug', 'role_slug');
+        return $this->belongsTo(Role::class, 'role_id', 'id');
     }
 
     public function hasPermission(string $permission): bool
     {
-        if (! $this->role_slug) {
+        if (! $this->role_id) {
             return false;
         }
 
@@ -57,9 +52,10 @@ class Admin extends Actor
 
         if ($this->role) {
             $data['role'] = [
-                'roleSlug' => $this->role->role_slug,
+                'id' => $this->role->id,
                 'name' => $this->role->name,
                 'permissions' => $this->role->permissions->map(fn ($p) => [
+                    'id' => $p->id,
                     'name' => $p->name,
                     'label' => $p->label,
                 ])->values()->all(),

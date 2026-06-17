@@ -12,20 +12,27 @@ class Permission extends Model
 
     protected $fillable = ['name', 'label'];
 
-    public function getRouteKeyName(): string
-    {
-        return 'name';
-    }
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+    ];
+
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(
-            Role::class,
-            'role_permissions',
-            'permission_name',
-            'role_slug',
-            'name',
-            'role_slug'
-        );
+        return $this->belongsToMany(Role::class, 'role_permissions');
+    }
+
+    public function toApiArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'label' => $this->label,
+        ];
     }
 }

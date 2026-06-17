@@ -11,27 +11,37 @@ class Role extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['role_slug', 'name'];
+    protected $fillable = ['name'];
 
-    public function getRouteKeyName(): string
-    {
-        return 'role_slug';
-    }
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+    ];
+
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 
     public function permissions(): BelongsToMany
     {
-        return $this->belongsToMany(
-            Permission::class,
-            'role_permissions',
-            'role_slug',
-            'permission_name',
-            'role_slug',
-            'name'
-        );
+        return $this->belongsToMany(Permission::class, 'role_permissions');
     }
 
     public function admins(): HasMany
     {
-        return $this->hasMany(Admin::class, 'role_slug', 'role_slug');
+        return $this->hasMany(Admin::class);
+    }
+
+    public function toApiArray(): array
+    {
+        $this->loadMissing('permissions');
+
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'permission_ids' => $this->permissions->pluck('id')->values()->all(),
+            'permissions' => $this->permissions->map(fn (Permission $permission) => $permission->toApiArray())->values()->all(),
+        ];
     }
 }

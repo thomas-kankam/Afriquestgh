@@ -17,7 +17,7 @@ class AdminSeeder extends Seeder
                 'first_name' => 'Thomas',
                 'last_name' => 'Kankam',
                 'phone_number' => '233556906969',
-                'role_slug' => 'super-admin',
+                'role_id' => 1,
                 'status' => 'active',
             ]
         );

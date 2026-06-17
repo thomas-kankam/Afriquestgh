@@ -46,13 +46,10 @@ class ClientAuthenticationController extends Controller
         $data = $request->validated();
         $client = self::findActorByEmailOrPhone(Client::class, $data['emailOrPhone']);
 
-        $type = self::resolveActorOtpType($client, 'client', $data['type'] ?? null);
-
         return self::verifyActorOtp(
             otp: $data['otp'],
             actor: $client,
             guard: 'client',
-            type: $type
         );
     }
 
@@ -64,8 +61,7 @@ class ClientAuthenticationController extends Controller
             return self::sendActorOtp(null, 'client', 'login');
         }
 
-        $type = $request->validated('type')
-            ?? ($client->is_verified ? 'login' : 'registration');
+        $type = self::resolveActorOtpType($client, 'client');
 
         return self::sendActorOtp($client, 'client', $type);
     }

@@ -90,6 +90,9 @@ Route::prefix('admin')->group(function () {
             Route::delete('roles/{role}', [AdminRoleController::class, 'destroy']);
             Route::get('permissions', [AdminPermissionController::class, 'index']);
             Route::get('permissions/{permission}', [AdminPermissionController::class, 'show']);
+            Route::post('permissions', [AdminPermissionController::class, 'store']);
+            Route::put('permissions/{permission}', [AdminPermissionController::class, 'update']);
+            Route::delete('permissions/{permission}', [AdminPermissionController::class, 'destroy']);
         });
 
         Route::middleware('admin.permission:contact_management')->group(function () {
