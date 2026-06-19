@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
+use App\Exceptions\BookingAmountMismatchException;
 use App\Models\Booking;
-use App\Models\Client;
 use App\Models\Payment;
 use App\Models\Tour;
 use Illuminate\Support\Str;
@@ -18,6 +18,11 @@ class BookingService
         $travelers = (int) ($payload['travelers'] ?? 1);
         $paymentMode = $payload['paymentMode'] ?? $payload['payment_mode'] ?? 'onsite';
         $amount = $this->calculateAmount($tour, $travelers);
+        $providedAmount = $payload['amount'] ?? null;
+
+        if ($providedAmount !== null && round((float) $providedAmount, 2) !== $amount) {
+            throw new BookingAmountMismatchException();
+        }
 
         $booking = Booking::create([
             'booking_slug' => (string) Str::uuid(),
@@ -99,9 +104,9 @@ class BookingService
     protected function calculateAmount(Tour $tour, int $travelers): float
     {
         $base = (float) $tour->price_amount * $travelers;
-        $settings = $tour->booking_settings ?? [];
-        $depositPercent = (int) ($settings['depositPercent'] ?? 100);
+        // $settings = $tour->booking_settings ?? [];
+        // $depositPercent = (int) ($settings['depositPercent'] ?? 100);
 
-        return round($base * ($depositPercent / 100), 2);
+        return round($base, 2);
     }
 }

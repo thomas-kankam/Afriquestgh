@@ -43,6 +43,7 @@ class Tour extends Model
         'booking_settings',
         'created_by_admin_slug',
         'operator_slug',
+        'booking_count'
     ];
 
     protected $casts = [
@@ -74,9 +75,9 @@ class Tour extends Model
         return $this->hasMany(Booking::class, 'tour_slug', 'tour_slug');
     }
 
-    public function scopeActive(Builder $query): Builder
+    public function scopePublished(Builder $query): Builder
     {
-        return $query->where('status', 'active');
+        return $query->where('status', 'published');
     }
 
     public function toListingArray(): array
@@ -110,6 +111,7 @@ class Tour extends Model
             'departureDates' => $this->departure_dates ?? [],
             'bookingSettings' => $this->booking_settings ?? [],
             'operatorSlug' => $this->operator_slug,
+            'bookingCount' => $this->booking_count,
             'createdAt' => $this->created_at,
             'updatedAt' => $this->updated_at,
         ];

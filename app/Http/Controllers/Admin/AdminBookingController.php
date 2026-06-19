@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exceptions\BookingAmountMismatchException;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Client;
@@ -52,12 +53,16 @@ class AdminBookingController extends Controller
             return self::apiResponse(true, 'Action Unsuccessful', (string) self::API_NOT_FOUND, 'Client not found', []);
         }
 
-        $result = $this->bookingService->create(
-            $request->all(),
-            'admin',
-            $admin->admin_slug,
-            $clientSlug
-        );
+        try {
+            $result = $this->bookingService->create(
+                $request->all(),
+                'admin',
+                $admin->admin_slug,
+                $clientSlug
+            );
+        } catch (BookingAmountMismatchException $e) {
+            return self::apiResponse(true, 'Action Unsuccessful', (string) self::API_BAD_REQUEST, $e->getMessage(), []);
+        }
 
         return self::apiResponse(false, 'Action Successful', (string) self::API_CREATED, 'Booking created', $result);
     }

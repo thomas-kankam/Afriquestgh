@@ -54,6 +54,7 @@ trait ListingMapper
             'not_included' => $data['notIncluded'] ?? $data['not_included'] ?? [],
             'departure_dates' => $data['departureDates'] ?? $data['departure_dates'] ?? [],
             'booking_settings' => $data['bookingSettings'] ?? $data['booking_settings'] ?? [],
+            'booking_count' => $data['bookingCount'] ?? $data['booking_count'] ?? 0,
             'created_by_admin_slug' => $adminSlug,
             'operator_slug' => $operatorSlug,
         ], fn($v) => $v !== null);

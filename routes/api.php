@@ -18,7 +18,7 @@ use App\Http\Controllers\Operator\OperatorListingController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('listings', [ListingController::class, 'index']);
+Route::post('listings', [ListingController::class, 'index']);
 Route::get('listings/{listing}', [ListingController::class, 'show']);
 Route::post('contacts', [ContactController::class, 'store']);
 

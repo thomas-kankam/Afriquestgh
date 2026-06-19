@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Client;
 
+use App\Exceptions\BookingAmountMismatchException;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Services\BookingService;
@@ -44,15 +45,21 @@ class ClientBookingController extends Controller
             'paymentMode' => 'required|in:online,onsite',
             'leadTraveler' => 'required|array',
             'leadTraveler.email' => 'required|email',
+            'amount' => 'required|numeric|min:0',
         ]);
 
         $client = request()->user();
-        $result = $this->bookingService->create(
-            $request->all(),
-            'client',
-            $client->client_slug,
-            $client->client_slug
-        );
+
+        try {
+            $result = $this->bookingService->create(
+                $request->all(),
+                'client',
+                $client->client_slug,
+                $client->client_slug
+            );
+        } catch (BookingAmountMismatchException $e) {
+            return self::apiResponse(true, 'Action Unsuccessful', (string) self::API_BAD_REQUEST, $e->getMessage(), []);
+        }
 
         return self::apiResponse(false, 'Action Successful', (string) self::API_CREATED, 'Booking submitted', $result);
     }

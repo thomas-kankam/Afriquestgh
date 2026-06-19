@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Operator;
 
+use App\Exceptions\BookingAmountMismatchException;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Client;
@@ -48,6 +49,7 @@ class OperatorBookingController extends Controller
     public function store(Request $request): JsonResponse
     {
         $request->validate([
+            'bookingType' => 'required|in:group,individual',
             'tourSlug' => 'required|string|exists:tours,tour_slug',
             'selectedDate' => 'required|date',
             'travelers' => 'required|integer|min:1',
@@ -55,6 +57,7 @@ class OperatorBookingController extends Controller
             'leadTraveler' => 'required|array',
             'leadTraveler.email' => 'required|email',
             'clientSlug' => 'nullable|string|exists:clients,client_slug',
+            'total_amount' => 'required|numeric|min:0',
         ]);
 
         $operator = request()->user();
@@ -69,12 +72,16 @@ class OperatorBookingController extends Controller
             return self::apiResponse(true, 'Action Unsuccessful', (string) self::API_NOT_FOUND, 'Client not found', []);
         }
 
-        $result = $this->bookingService->create(
-            array_merge($request->all(), ['tourSlug' => $tour->tour_slug]),
-            'operator',
-            $operator->operator_slug,
-            $clientSlug
-        );
+        try {
+            $result = $this->bookingService->create(
+                array_merge($request->all(), ['tourSlug' => $tour->tour_slug]),
+                'operator',
+                $operator->operator_slug,
+                $clientSlug
+            );
+        } catch (BookingAmountMismatchException $e) {
+            return self::apiResponse(true, 'Action Unsuccessful', (string) self::API_BAD_REQUEST, $e->getMessage(), []);
+        }
 
         return self::apiResponse(false, 'Action Successful', (string) self::API_CREATED, 'Booking created', $result);
     }
