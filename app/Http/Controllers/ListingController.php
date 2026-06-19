@@ -21,16 +21,18 @@ class ListingController extends Controller
             $query->where('country', 'like', '%' . $request->country . '%');
         }
 
-        if ($request->filled('price_amount')) {
-            $query->where('price_amount', '>=', $request->price_amount);
+        $priceSort = strtolower((string) $request->input('price_amount', ''));
+        $dateSort = strtolower((string) $request->input('sort_by', ''));
+
+        if (in_array($priceSort, ['asc', 'desc'], true)) {
+            $query->orderBy('price_amount', $priceSort);
+        } elseif (in_array($dateSort, ['asc', 'desc'], true)) {
+            $query->orderBy('created_at', $dateSort);
+        } else {
+            $query->latest();
         }
 
-        // sort_by_created_at asc or desc
-        if ($request->filled('sort_by')) {
-            $query->orderBy('created_at', $request->sort_by);
-        }
-
-        $paginator = self::paginateQuery($request, $query->latest()->orderBy('created_at', 'desc'));
+        $paginator = self::paginateQuery($request, $query);
 
         return self::paginatedApiResponse('Listings retrieved', $paginator, fn(Tour $tour) => $tour->toListingArray());
     }

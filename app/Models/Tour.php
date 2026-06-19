@@ -75,6 +75,19 @@ class Tour extends Model
         return $this->hasMany(Booking::class, 'tour_slug', 'tour_slug');
     }
 
+    public static function syncBookingCountFor(?string $tourSlug): void
+    {
+        if (! $tourSlug) {
+            return;
+        }
+
+        static::query()
+            ->where('tour_slug', $tourSlug)
+            ->update([
+                'booking_count' => Booking::query()->where('tour_slug', $tourSlug)->count(),
+            ]);
+    }
+
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('status', 'published');

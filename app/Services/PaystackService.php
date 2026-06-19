@@ -22,7 +22,7 @@ class PaystackService
 
     public function initializeTransaction(string $email, float $amount, string $currency, array $metadata = []): array
     {
-        $reference = 'AFQ_'.Str::upper(Str::random(12));
+        $reference = 'AFQ_' . Str::upper(Str::random(12)) . '_' . time();
 
         $response = Http::withToken($this->secretKey)
             ->post('https://api.paystack.co/transaction/initialize', [
@@ -51,7 +51,7 @@ class PaystackService
     public function verifyTransaction(string $reference): array
     {
         $response = Http::withToken($this->secretKey)
-            ->get('https://api.paystack.co/transaction/verify/'.$reference);
+            ->get('https://api.paystack.co/transaction/verify/' . $reference);
 
         $body = $response->json();
 
