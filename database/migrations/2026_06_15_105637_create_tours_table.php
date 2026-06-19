@@ -12,11 +12,11 @@ return new class extends Migration
             $table->id();
             $table->string('tour_slug')->unique();
             $table->string('name');
-            $table->string('location')->nullable();
+            $table->json('locations')->nullable();
             $table->string('country')->nullable();
             $table->string('country_code')->nullable();
             $table->json('categories')->nullable();
-            $table->string('status')->default('inactive');
+            $table->string('status')->default('draft');
             $table->boolean('featured')->default(false);
             $table->unsignedSmallInteger('duration_days')->nullable();
             $table->string('duration_label')->nullable();
@@ -26,8 +26,6 @@ return new class extends Migration
             $table->decimal('price_amount', 12, 2)->default(0);
             $table->string('price_currency', 10)->default('USD');
             $table->string('price_label')->nullable();
-            $table->decimal('rating', 3, 1)->default(0);
-            $table->unsignedInteger('review_count')->default(0);
             $table->string('badge')->nullable();
             $table->string('badge_variant')->nullable();
             $table->longText('cover_image_url')->nullable();

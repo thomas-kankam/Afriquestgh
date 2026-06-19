@@ -9,6 +9,14 @@ use Illuminate\Http\Request;
 
 trait PaginatesApiResponses
 {
+    abstract protected static function apiResponse(
+        bool $in_error,
+        string $message,
+        int|string $status_code,
+        string $reason,
+        ?array $data = [],
+    ): JsonResponse;
+
     protected static function paginateQuery(Request $request, Builder $query, int $defaultPerPage = 15): LengthAwarePaginator
     {
         $perPage = max(1, min((int) $request->input('per_page', $defaultPerPage), 100));
@@ -21,7 +29,7 @@ trait PaginatesApiResponses
         string $reason,
         LengthAwarePaginator $paginator,
         callable $transform,
-        int|string $statusCode = self::API_SUCCESS,
+        int|string $statusCode = 200,
     ): JsonResponse {
         return self::apiResponse(false, 'Action Successful', (string) $statusCode, $reason, [
             'items' => collect($paginator->items())->map($transform)->values()->all(),

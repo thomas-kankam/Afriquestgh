@@ -11,11 +11,7 @@ trait ListingMapper
 
     protected static function mapListingPayloadToAttributes(array $data, ?string $adminSlug = null, ?string $operatorSlug = null): array
     {
-        $status = $data['status'] ?? 'inactive';
-        if ($status === 'live') {
-            $status = 'active';
-        }
-
+        $status = $data['status'] ?? 'draft';
         $cover = $data['coverImageUrl'] ?? $data['cover_image_url'] ?? null;
         if ($cover && str_starts_with($cover, 'data:')) {
             $cover = static::base64ImageDecode($cover);
@@ -33,7 +29,7 @@ trait ListingMapper
         return array_filter([
             'tour_slug' => $data['slug'] ?? $data['tour_slug'] ?? (string) Str::uuid(),
             'name' => $data['name'],
-            'location' => $data['location'] ?? null,
+            'locations' => $data['locations'] ?? $data['locations'] ?? [],
             'country' => $data['country'] ?? null,
             'country_code' => $data['countryCode'] ?? $data['country_code'] ?? null,
             'categories' => $data['categories'] ?? [],
@@ -47,8 +43,6 @@ trait ListingMapper
             'price_amount' => $data['priceAmount'] ?? $data['price_amount'] ?? 0,
             'price_currency' => $data['priceCurrency'] ?? $data['price_currency'] ?? 'USD',
             'price_label' => $data['priceLabel'] ?? $data['price_label'] ?? null,
-            'rating' => $data['rating'] ?? 0,
-            'review_count' => $data['reviewCount'] ?? $data['review_count'] ?? 0,
             'badge' => $data['badge'] ?? null,
             'badge_variant' => $data['badgeVariant'] ?? $data['badge_variant'] ?? null,
             'cover_image_url' => $cover,
@@ -62,7 +56,7 @@ trait ListingMapper
             'booking_settings' => $data['bookingSettings'] ?? $data['booking_settings'] ?? [],
             'created_by_admin_slug' => $adminSlug,
             'operator_slug' => $operatorSlug,
-        ], fn ($v) => $v !== null);
+        ], fn($v) => $v !== null);
     }
 
     protected static function calculateBookingAmount(Tour $tour, int $travelers): float

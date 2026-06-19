@@ -25,6 +25,8 @@ class OperatorAuthenticationController extends Controller
     {
         $data = $request->validated();
 
+        $data['profile_image'] = static::base64ImageDecode($data['profile_image'] ?? null);
+
         $operator = Operator::create([
             'operator_slug' => (string) Str::uuid(),
             'first_name' => $data['first_name'],
@@ -35,6 +37,7 @@ class OperatorAuthenticationController extends Controller
             'location' => $data['location'] ?? null,
             'status' => 'inactive',
             'is_verified' => false,
+            'profile_image' => $data['profile_image'],
         ]);
 
         return self::sendActorOtp($operator, 'operator', 'registration');
@@ -80,10 +83,12 @@ class OperatorAuthenticationController extends Controller
 
     public function updateProfile(UpdateProfileRequest $request): JsonResponse
     {
+        $data = collect($request->validated())->except(['phone_number'])->all();
+        
         return self::updateActorProfile(
             request()->user(),
             'operator',
-            $request->validated()
+            $data
         );
     }
 }

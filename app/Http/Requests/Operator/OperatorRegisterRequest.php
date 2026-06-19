@@ -21,6 +21,7 @@ class OperatorRegisterRequest extends FormRequest
             'email' => ['required', 'email', 'max:255', Rule::unique('operators', 'email')],
             'organization' => ['nullable', 'string', 'max:255'],
             'location' => ['nullable', 'string', 'max:255'],
+            'profile_image' => ['nullable', 'starts_with:data:,http://,https://'],
         ];
     }
 }

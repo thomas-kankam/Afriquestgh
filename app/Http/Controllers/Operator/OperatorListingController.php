@@ -23,7 +23,7 @@ class OperatorListingController extends Controller
 
         $paginator = self::paginateQuery($request, $query->latest());
 
-        return self::paginatedApiResponse('Tours retrieved', $paginator, fn (Tour $tour) => $tour->toListingArray());
+        return self::paginatedApiResponse('Tours retrieved', $paginator, fn(Tour $tour) => $tour->toListingArray());
     }
 
     public function show(Tour $listing): JsonResponse
@@ -36,9 +36,32 @@ class OperatorListingController extends Controller
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'slug' => 'nullable|string|max:255|unique:tours,tour_slug',
             'name' => 'required|string|max:255',
-            'status' => 'nullable|in:active,inactive,expired,live',
+            'status' => 'nullable|in:draft,published,archived',
+            'locations' => 'nullable|array',
+            'country' => 'nullable|string|max:255',
+            'country_code' => 'nullable|string|max:255',
+            'categories' => 'nullable|array',
+            'featured' => 'nullable|boolean',
+            'duration_days' => 'nullable|integer',
+            'duration_label' => 'nullable|string|max:255',
+            'group_size_min' => 'nullable|integer',
+            'group_size_max' => 'nullable|integer',
+            'group_size_label' => 'nullable|string|max:255',
+            'price_amount' => 'nullable|numeric',
+            'price_currency' => 'nullable|string|max:255',
+            'price_label' => 'nullable|string|max:255',
+            'badge' => 'nullable|string|max:255',
+            'badge_variant' => 'nullable|string|max:255',
+            'cover_image_url' => 'nullable|string|max:255',
+            'gallery_image_urls' => 'nullable|array',
+            'description' => 'nullable|string',
+            'highlights' => 'nullable|array',
+            'itinerary' => 'nullable|array',
+            'included' => 'nullable|array',
+            'not_included' => 'nullable|array',
+            'departure_dates' => 'nullable|array',
+            'booking_settings' => 'nullable|array',
         ]);
 
         $operator = request()->user();

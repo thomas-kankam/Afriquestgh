@@ -14,12 +14,35 @@ class Tour extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'tour_slug', 'name', 'location', 'country', 'country_code', 'categories',
-        'status', 'featured', 'duration_days', 'duration_label', 'group_size_min',
-        'group_size_max', 'group_size_label', 'price_amount', 'price_currency', 'price_label',
-        'rating', 'review_count', 'badge', 'badge_variant', 'cover_image_url',
-        'gallery_image_urls', 'description', 'highlights', 'itinerary', 'included',
-        'not_included', 'departure_dates', 'booking_settings', 'created_by_admin_slug', 'operator_slug',
+        'tour_slug',
+        'name',
+        'locations',
+        'country',
+        'country_code',
+        'categories',
+        'status',
+        'featured',
+        'duration_days',
+        'duration_label',
+        'group_size_min',
+        'group_size_max',
+        'group_size_label',
+        'price_amount',
+        'price_currency',
+        'price_label',
+        'badge',
+        'badge_variant',
+        'cover_image_url',
+        'gallery_image_urls',
+        'description',
+        'highlights',
+        'itinerary',
+        'included',
+        'not_included',
+        'departure_dates',
+        'booking_settings',
+        'created_by_admin_slug',
+        'operator_slug',
     ];
 
     protected $casts = [
@@ -33,7 +56,7 @@ class Tour extends Model
         'departure_dates' => 'array',
         'booking_settings' => 'array',
         'price_amount' => 'decimal:2',
-        'rating' => 'decimal:1',
+        'locations' => 'array',
     ];
 
     public function getRouteKeyName(): string
@@ -61,7 +84,7 @@ class Tour extends Model
         return [
             'slug' => $this->tour_slug,
             'name' => $this->name,
-            'location' => $this->location,
+            'locations' => $this->locations ?? [],
             'country' => $this->country,
             'countryCode' => $this->country_code,
             'categories' => $this->categories ?? [],
@@ -75,8 +98,6 @@ class Tour extends Model
             'priceAmount' => (float) $this->price_amount,
             'priceCurrency' => $this->price_currency,
             'priceLabel' => $this->price_label,
-            'rating' => (float) $this->rating,
-            'reviewCount' => $this->review_count,
             'badge' => $this->badge,
             'badgeVariant' => $this->badge_variant,
             'coverImageUrl' => $this->cover_image_url,

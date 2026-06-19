@@ -1,7 +1,6 @@
 <?php
 namespace App\Traits;
 
-use Illuminate\Database\Eloquent\Casts\Json;
 use Illuminate\Http\JsonResponse;
 
 trait ApiTransformer

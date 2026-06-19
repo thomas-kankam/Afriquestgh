@@ -23,6 +23,7 @@ class UpdateProfileRequest extends FormRequest
             'phone_number' => ['nullable', 'string', 'max:20'],
             'organization' => ['nullable', 'string', 'max:255'],
             'location' => ['nullable', 'string', 'max:255'],
+            'profile_image' => ['nullable', 'starts_with:data:,http://,https://'],
         ];
     }
 }
