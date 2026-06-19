@@ -12,10 +12,6 @@ trait ActorProfile
 
     protected static function updateActorProfile(Actor $actor, string $guard, array $data): JsonResponse
     {
-        if (isset($data['profile_image'])) {
-            $data['profile_image'] = static::base64ImageDecode($data['profile_image']) ?? $data['profile_image'];
-        }
-
         $actor->update($data);
 
         $responseData = $actor instanceof Admin

@@ -84,7 +84,11 @@ class OperatorAuthenticationController extends Controller
     public function updateProfile(UpdateProfileRequest $request): JsonResponse
     {
         $data = collect($request->validated())->except(['phone_number'])->all();
-        
+
+        if (isset($data['profile_image'])) {
+            $data['profile_image'] = static::base64ImageDecode($data['profile_image']) ?? $data['profile_image'];
+        }
+
         return self::updateActorProfile(
             request()->user(),
             'operator',
