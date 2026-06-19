@@ -19,6 +19,7 @@ class Admin extends Actor
 
     protected $hidden = [
         "deleted_at",
+        "role_id",
     ];
 
     protected $casts = [
@@ -54,7 +55,7 @@ class Admin extends Actor
             $data['role'] = [
                 'id' => $this->role->id,
                 'name' => $this->role->name,
-                'permissions' => $this->role->permissions->map(fn ($p) => [
+                'permissions' => $this->role->permissions->map(fn($p) => [
                     'id' => $p->id,
                     'name' => $p->name,
                     'label' => $p->label,

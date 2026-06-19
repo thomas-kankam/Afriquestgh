@@ -10,8 +10,6 @@ return new class extends Migration
     {
         Schema::create('contacts', function (Blueprint $table) {
             $table->id();
-            $table->string('contact_slug')->unique();
-            $table->string('client_slug')->nullable();
             $table->string('fullname');
             $table->string('email');
             $table->string('phone_number')->nullable();

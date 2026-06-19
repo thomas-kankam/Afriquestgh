@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendAdminWelcomeEmailJob;
 use App\Models\Admin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -43,6 +44,8 @@ class AdminUserController extends Controller
             'role_id' => $data['role_id'],
             'status' => 'active',
         ]);
+
+        SendAdminWelcomeEmailJob::dispatch($admin);
 
         return self::apiResponse(false, 'Action Successful', (string) self::API_CREATED, 'Admin created', $admin->fresh(['role.permissions'])->toAuthArray());
     }
