@@ -21,7 +21,7 @@ class AdminContactController extends Controller
 
     public function update(Request $request, Contact $contact): JsonResponse
     {
-        $contact->update($request->only(['status', 'type']));
+        $contact->update($request->only('status'));
 
         return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Contact updated', $contact->fresh()->toArray());
     }
