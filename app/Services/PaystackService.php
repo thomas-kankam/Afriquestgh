@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class PaystackService
@@ -58,6 +59,8 @@ class PaystackService
         if (! $response->successful() || ! ($body['status'] ?? false)) {
             throw new \RuntimeException($body['message'] ?? 'Paystack verification failed');
         }
+
+        Log::info('Paystack verified', ['verified' => $body]);
 
         return $body['data'] ?? [];
     }

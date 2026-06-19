@@ -7,6 +7,7 @@ use App\Services\BookingService;
 use App\Services\PaystackService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
@@ -31,7 +32,7 @@ class PaymentController extends Controller
             }
 
             $payment = Payment::query()->where('paystack_reference', $reference)->with('booking.tour')->first();
-
+            Log::info('Payment verified', ['payment' => $payment]);
             return self::apiResponse(
                 false,
                 'Action Successful',

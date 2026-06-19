@@ -6,6 +6,7 @@ use App\Exceptions\BookingAmountMismatchException;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Tour;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class BookingService
@@ -60,6 +61,8 @@ class BookingService
                     'tour_slug' => $tour->tour_slug,
                 ]
             );
+
+            Log::info('Paystack initialized', ['initialized' => $initialized]);
 
             Payment::create([
                 'payment_slug' => (string) Str::uuid(),
