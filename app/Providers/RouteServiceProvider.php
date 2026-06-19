@@ -7,7 +7,6 @@ use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvi
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use App\Models\Booking;
-use App\Models\Contact;
 use App\Models\Tour;
 use Illuminate\Support\Facades\Route;
 
@@ -29,7 +28,6 @@ class RouteServiceProvider extends ServiceProvider
     {
         Route::bind('listing', fn (string $value) => Tour::query()->where('tour_slug', $value)->firstOrFail());
         Route::bind('booking', fn (string $value) => Booking::query()->where('booking_slug', $value)->firstOrFail());
-        Route::bind('contact', fn (string $value) => Contact::query()->where('contact_slug', $value)->firstOrFail());
 
         $this->configureRateLimiting();
 
