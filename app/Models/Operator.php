@@ -15,6 +15,7 @@ class Operator extends Actor
         'is_verified',
         'verified_at',
         'status',
+        'profile_image',
     ];
 
     protected $hidden = [
@@ -28,6 +29,7 @@ class Operator extends Actor
         'verified_at' => 'datetime',
         'is_verified' => 'boolean',
         'status' => 'string',
+        'profile_image' => 'string',
     ];
 
     public function getRouteKeyName(): string
