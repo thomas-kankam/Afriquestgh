@@ -12,6 +12,9 @@ use App\Http\Controllers\Client\ClientAuthenticationController;
 use App\Http\Controllers\Client\ClientBookingController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ListingController;
+use App\Http\Controllers\Operator\OperatorAuthenticationController;
+use App\Http\Controllers\Operator\OperatorBookingController;
+use App\Http\Controllers\Operator\OperatorListingController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
@@ -37,6 +40,30 @@ Route::prefix('client')->group(function () {
         Route::post('bookings', [ClientBookingController::class, 'store']);
         Route::put('bookings/{booking}', [ClientBookingController::class, 'update']);
         Route::delete('bookings/{booking}', [ClientBookingController::class, 'destroy']);
+    });
+});
+
+Route::prefix('operator')->group(function () {
+    Route::post('login', [OperatorAuthenticationController::class, 'login']);
+    Route::post('register', [OperatorAuthenticationController::class, 'register']);
+    Route::post('verify-otp', [OperatorAuthenticationController::class, 'verifyOtp']);
+    Route::post('resend-otp', [OperatorAuthenticationController::class, 'resendOtp']);
+
+    Route::middleware('auth:operator-api')->group(function () {
+        Route::post('logout', [OperatorAuthenticationController::class, 'logout']);
+        Route::post('update-profile', [OperatorAuthenticationController::class, 'updateProfile']);
+
+        Route::get('tours', [OperatorListingController::class, 'index']);
+        Route::get('tours/{listing}', [OperatorListingController::class, 'show']);
+        Route::post('tours', [OperatorListingController::class, 'store']);
+        Route::put('tours/{listing}', [OperatorListingController::class, 'update']);
+        Route::delete('tours/{listing}', [OperatorListingController::class, 'destroy']);
+
+        Route::get('bookings', [OperatorBookingController::class, 'index']);
+        Route::get('bookings/{booking}', [OperatorBookingController::class, 'show']);
+        Route::post('bookings', [OperatorBookingController::class, 'store']);
+        Route::put('bookings/{booking}', [OperatorBookingController::class, 'update']);
+        Route::delete('bookings/{booking}', [OperatorBookingController::class, 'destroy']);
     });
 });
 

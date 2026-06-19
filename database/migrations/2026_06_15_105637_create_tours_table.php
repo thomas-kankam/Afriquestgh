@@ -40,12 +40,14 @@ return new class extends Migration
             $table->json('departure_dates')->nullable();
             $table->json('booking_settings')->nullable();
             $table->string('created_by_admin_slug')->nullable();
+            $table->string('operator_slug')->nullable();
             $table->softDeletes();
             $table->timestamps();
 
             $table->index('tour_slug');
             $table->index('status');
             $table->index('featured');
+            $table->index('operator_slug');
         });
     }
 

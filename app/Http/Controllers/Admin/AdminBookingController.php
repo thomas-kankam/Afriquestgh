@@ -21,9 +21,9 @@ class AdminBookingController extends Controller
             $query->where('client_slug', $request->client_slug);
         }
 
-        $bookings = $query->latest()->get()->map(fn ($b) => $b->toBookingArray());
+        $paginator = self::paginateQuery($request, $query->latest());
 
-        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Bookings retrieved', $bookings->all());
+        return self::paginatedApiResponse('Bookings retrieved', $paginator, fn (Booking $b) => $b->toBookingArray());
     }
 
     public function show(Booking $booking): JsonResponse

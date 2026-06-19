@@ -10,9 +10,11 @@ use Illuminate\Support\Str;
 
 class AdminClientController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Clients retrieved', Client::latest()->get()->toArray());
+        $paginator = self::paginateQuery($request, Client::query()->latest());
+
+        return self::paginatedApiResponse('Clients retrieved', $paginator, fn (Client $client) => $client->toArray());
     }
 
     public function show(Client $client): JsonResponse

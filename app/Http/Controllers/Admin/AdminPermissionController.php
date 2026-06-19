@@ -10,11 +10,11 @@ use Illuminate\Support\Str;
 
 class AdminPermissionController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $permissions = Permission::query()->get()->map->toApiArray();
+        $paginator = self::paginateQuery($request, Permission::query()->latest());
 
-        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Permissions retrieved', $permissions->all());
+        return self::paginatedApiResponse('Permissions retrieved', $paginator, fn (Permission $permission) => $permission->toApiArray());
     }
 
     public function show(Permission $permission): JsonResponse

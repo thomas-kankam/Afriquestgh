@@ -38,6 +38,8 @@ class BookingService
             'dietary_needs' => $payload['dietaryNeeds'] ?? $payload['dietary_needs'] ?? null,
             'additional_travelers' => $payload['additionalTravelers'] ?? $payload['additional_travelers'] ?? [],
             'status' => 'pending',
+            'operator_slug' => $bookedByType === 'operator' ? $bookedBySlug : $tour->operator_slug,
+            'created_by_admin_slug' => $bookedByType === 'admin' ? $bookedBySlug : null,
         ]);
 
         $paymentUrl = null;

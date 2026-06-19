@@ -9,7 +9,7 @@ trait ListingMapper
 {
     use Helpers;
 
-    protected static function mapListingPayloadToAttributes(array $data, ?string $adminSlug = null): array
+    protected static function mapListingPayloadToAttributes(array $data, ?string $adminSlug = null, ?string $operatorSlug = null): array
     {
         $status = $data['status'] ?? 'inactive';
         if ($status === 'live') {
@@ -61,6 +61,7 @@ trait ListingMapper
             'departure_dates' => $data['departureDates'] ?? $data['departure_dates'] ?? [],
             'booking_settings' => $data['bookingSettings'] ?? $data['booking_settings'] ?? [],
             'created_by_admin_slug' => $adminSlug,
+            'operator_slug' => $operatorSlug,
         ], fn ($v) => $v !== null);
     }
 

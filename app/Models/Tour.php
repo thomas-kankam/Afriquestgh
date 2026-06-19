@@ -19,7 +19,7 @@ class Tour extends Model
         'group_size_max', 'group_size_label', 'price_amount', 'price_currency', 'price_label',
         'rating', 'review_count', 'badge', 'badge_variant', 'cover_image_url',
         'gallery_image_urls', 'description', 'highlights', 'itinerary', 'included',
-        'not_included', 'departure_dates', 'booking_settings', 'created_by_admin_slug',
+        'not_included', 'departure_dates', 'booking_settings', 'created_by_admin_slug', 'operator_slug',
     ];
 
     protected $casts = [
@@ -39,6 +39,11 @@ class Tour extends Model
     public function getRouteKeyName(): string
     {
         return 'tour_slug';
+    }
+
+    public function operator(): BelongsTo
+    {
+        return $this->belongsTo(Operator::class, 'operator_slug', 'operator_slug');
     }
 
     public function bookings(): HasMany
@@ -83,6 +88,7 @@ class Tour extends Model
             'notIncluded' => $this->not_included ?? [],
             'departureDates' => $this->departure_dates ?? [],
             'bookingSettings' => $this->booking_settings ?? [],
+            'operatorSlug' => $this->operator_slug,
             'createdAt' => $this->created_at,
             'updatedAt' => $this->updated_at,
         ];

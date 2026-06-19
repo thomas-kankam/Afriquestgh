@@ -11,18 +11,27 @@ trait AppNotifications
 {
     use ApiTransformer, Helpers;
 
-    protected static function isClientVerified(?Actor $actor): bool
+    protected static function isVerifiableActorVerified(?Actor $actor, string $guard): bool
     {
-        if (! $actor instanceof \App\Models\Client) {
-            return false;
+        if ($guard === 'client' && $actor instanceof \App\Models\Client) {
+            return (bool) $actor->is_verified || $actor->verified_at !== null;
         }
 
-        return (bool) $actor->is_verified || $actor->verified_at !== null;
+        if ($guard === 'operator' && $actor instanceof \App\Models\Operator) {
+            return (bool) $actor->is_verified || $actor->verified_at !== null;
+        }
+
+        return false;
+    }
+
+    protected static function isClientVerified(?Actor $actor): bool
+    {
+        return self::isVerifiableActorVerified($actor, 'client');
     }
 
     protected static function resolveActorOtpType(?Actor $actor, string $guard): string
     {
-        if ($guard === 'client' && $actor && ! self::isClientVerified($actor)) {
+        if ($actor && in_array($guard, ['client', 'operator'], true) && ! self::isVerifiableActorVerified($actor, $guard)) {
             return 'registration';
         }
 
@@ -131,9 +140,9 @@ trait AppNotifications
         }
 
         $verifiedType = $result['type'];
-        $shouldActivate = $guard === 'client'
+        $shouldActivate = in_array($guard, ['client', 'operator'], true)
             && $verifiedType === 'registration'
-            && ! self::isClientVerified($actor);
+            && ! self::isVerifiableActorVerified($actor, $guard);
 
         $accessToken = self::apiToken($actor, $guard);
 

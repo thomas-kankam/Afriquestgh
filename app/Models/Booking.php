@@ -16,7 +16,7 @@ class Booking extends Model
         'booking_slug', 'client_slug', 'booked_by_type', 'booked_by_slug', 'tour_slug',
         'booking_type', 'selected_date', 'travelers', 'payment_mode', 'payment_status',
         'amount', 'currency', 'lead_traveler', 'group_details', 'special_requests',
-        'dietary_needs', 'additional_travelers', 'status',
+        'dietary_needs', 'additional_travelers', 'status', 'operator_slug', 'created_by_admin_slug',
     ];
 
     protected $casts = [
@@ -68,6 +68,7 @@ class Booking extends Model
             'dietaryNeeds' => $this->dietary_needs,
             'additionalTravelers' => $this->additional_travelers ?? [],
             'status' => $this->status,
+            'operatorSlug' => $this->operator_slug,
             'createdAt' => $this->created_at,
             'updatedAt' => $this->updated_at,
         ];

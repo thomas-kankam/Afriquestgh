@@ -9,11 +9,11 @@ use Illuminate\Http\Request;
 
 class AdminRoleController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $roles = Role::with('permissions')->get()->map->toApiArray();
+        $paginator = self::paginateQuery($request, Role::with('permissions')->latest());
 
-        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Roles retrieved', $roles->all());
+        return self::paginatedApiResponse('Roles retrieved', $paginator, fn (Role $role) => $role->toApiArray());
     }
 
     public function show(Role $role): JsonResponse

@@ -28,6 +28,8 @@ return new class extends Migration
             $table->text('dietary_needs')->nullable();
             $table->json('additional_travelers')->nullable();
             $table->string('status')->default('pending');
+            $table->string('operator_slug')->nullable();
+            $table->string('created_by_admin_slug')->nullable();
             $table->softDeletes();
             $table->timestamps();
 
@@ -35,6 +37,7 @@ return new class extends Migration
             $table->index('client_slug');
             $table->index('tour_slug');
             $table->index('payment_status');
+            $table->index('operator_slug');
         });
     }
 

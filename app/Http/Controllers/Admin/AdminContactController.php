@@ -9,9 +9,11 @@ use Illuminate\Http\Request;
 
 class AdminContactController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Contacts retrieved', Contact::latest()->get()->toArray());
+        $paginator = self::paginateQuery($request, Contact::query()->latest());
+
+        return self::paginatedApiResponse('Contacts retrieved', $paginator, fn (Contact $contact) => $contact->toArray());
     }
 
     public function show(Contact $contact): JsonResponse

@@ -11,11 +11,11 @@ use Illuminate\Support\Str;
 
 class AdminUserController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $admins = Admin::with('role.permissions')->latest()->get()->map->toAuthArray();
+        $paginator = self::paginateQuery($request, Admin::with('role.permissions')->latest());
 
-        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Admins retrieved', $admins->all());
+        return self::paginatedApiResponse('Admins retrieved', $paginator, fn (Admin $admin) => $admin->toAuthArray());
     }
 
     public function show(Admin $admin): JsonResponse

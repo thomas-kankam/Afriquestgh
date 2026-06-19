@@ -20,9 +20,9 @@ class AdminListingController extends Controller
             $query->where('status', $request->status);
         }
 
-        $listings = $query->latest()->get()->map->toListingArray();
+        $paginator = self::paginateQuery($request, $query->latest());
 
-        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Listings retrieved', $listings->all());
+        return self::paginatedApiResponse('Listings retrieved', $paginator, fn (Tour $tour) => $tour->toListingArray());
     }
 
     public function show(Tour $listing): JsonResponse

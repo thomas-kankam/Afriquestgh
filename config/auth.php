@@ -49,7 +49,12 @@ return [
         'admin-api' => [
             'driver' => 'passport',
             'provider' => 'admins',
-        ]
+        ],
+
+        'operator-api' => [
+            'driver' => 'passport',
+            'provider' => 'operators',
+        ],
     ],
 
     /*
@@ -82,7 +87,12 @@ return [
         'clients' => [
             'driver' => 'eloquent',
             'model' => App\Models\Client::class,
-        ]
+        ],
+
+        'operators' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Operator::class,
+        ],
     ],
 
     /*

@@ -12,17 +12,18 @@ class ClientBookingController extends Controller
 {
     public function __construct(protected BookingService $bookingService) {}
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $client = request()->user();
-        $bookings = Booking::query()
-            ->with('tour')
-            ->where('client_slug', $client->client_slug)
-            ->latest()
-            ->get()
-            ->map(fn ($b) => $b->toBookingArray());
+        $paginator = self::paginateQuery(
+            $request,
+            Booking::query()
+                ->with('tour')
+                ->where('client_slug', $client->client_slug)
+                ->latest()
+        );
 
-        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Bookings retrieved', $bookings->all());
+        return self::paginatedApiResponse('Bookings retrieved', $paginator, fn (Booking $booking) => $booking->toBookingArray());
     }
 
     public function show(Booking $booking): JsonResponse
