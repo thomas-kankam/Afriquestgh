@@ -198,7 +198,11 @@ class BookingService
     {
         $payment = Payment::query()->where('paystack_reference', $reference)->with('booking.tour')->first();
 
-        if (! $payment || in_array($payment->status, ['success', 'failed'], true)) {
+        if (! $payment || $payment->status === 'success') {
+            return;
+        }
+
+        if ($payment->status === 'failed') {
             return;
         }
 
@@ -214,6 +218,40 @@ class BookingService
         if ($payment->booking) {
             $this->notifications->notifyPaymentFailed($payment->booking);
         }
+    }
+
+    public function retryClientPayment(Payment $payment): array
+    {
+        $booking = $payment->booking()->with('tour')->firstOrFail();
+
+        if ($booking->payment_mode !== 'online') {
+            throw new \RuntimeException('Only online payments can be retried.');
+        }
+
+        if ($payment->status === 'success' || $booking->payment_status === 'paid') {
+            throw new \RuntimeException('This payment has already been completed.');
+        }
+
+        if (! in_array($payment->status, ['pending', 'failed'], true)) {
+            throw new \RuntimeException('This payment cannot be retried.');
+        }
+
+        $amount = $this->calculateAmount($booking->tour, (int) $booking->travelers);
+
+        $this->initializeOnlinePayment($booking, $booking->tour, $amount);
+
+        $booking->update([
+            'payment_status' => 'pending',
+            'amount' => $amount,
+        ]);
+
+        $latestPayment = Payment::query()
+            ->where('booking_code', $booking->booking_code)
+            ->latest('id')
+            ->with('booking.tour')
+            ->firstOrFail();
+
+        return $latestPayment->toPaymentArray();
     }
 
     public function calculateAmountForTour(Tour $tour, int $travelers): float

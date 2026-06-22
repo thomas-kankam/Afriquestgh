@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\AdminRoleController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Client\ClientAuthenticationController;
 use App\Http\Controllers\Client\ClientBookingController;
+use App\Http\Controllers\Client\ClientPaymentController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\Operator\OperatorAuthenticationController;
@@ -40,6 +41,10 @@ Route::prefix('client')->group(function () {
         Route::post('bookings', [ClientBookingController::class, 'store']);
         Route::put('bookings/{booking}', [ClientBookingController::class, 'update']);
         Route::delete('bookings/{booking}', [ClientBookingController::class, 'destroy']);
+
+        Route::get('payments', [ClientPaymentController::class, 'index']);
+        Route::get('payments/{payment}', [ClientPaymentController::class, 'show']);
+        Route::post('payments/{payment}/retry', [ClientPaymentController::class, 'retry']);
     });
 });
 
