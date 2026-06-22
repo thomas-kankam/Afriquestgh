@@ -139,6 +139,11 @@ class BookingService
         }
     }
 
+    public function calculateAmountForTour(Tour $tour, int $travelers): float
+    {
+        return $this->calculateAmount($tour, $travelers);
+    }
+
     protected function calculateAmount(Tour $tour, int $travelers): float
     {
         $base = (float) $tour->price_amount * $travelers;
