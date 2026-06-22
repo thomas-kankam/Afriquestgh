@@ -72,16 +72,12 @@ class OperatorBookingController extends Controller
             return self::apiResponse(true, 'Action Unsuccessful', (string) self::API_NOT_FOUND, 'Client not found', []);
         }
 
-        try {
-            $result = $this->bookingService->create(
-                array_merge($request->all(), ['tourSlug' => $tour->tour_slug]),
-                'operator',
-                $operator->operator_slug,
-                $clientSlug
-            );
-        } catch (BookingAmountMismatchException $e) {
-            return self::apiResponse(true, 'Action Unsuccessful', (string) self::API_BAD_REQUEST, $e->getMessage(), []);
-        }
+        $result = $this->bookingService->create(
+            array_merge($request->all(), ['tourSlug' => $tour->tour_slug]),
+            'operator',
+            $operator->operator_slug,
+            $clientSlug
+        );
 
         return self::apiResponse(false, 'Action Successful', (string) self::API_CREATED, 'Booking created', $result);
     }

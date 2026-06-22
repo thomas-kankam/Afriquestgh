@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->string('payment_slug')->unique();
-            $table->string('booking_slug');
+            $table->string('booking_code');
             $table->string('paystack_reference')->nullable()->unique();
             $table->string('paystack_access_code')->nullable();
             $table->decimal('amount', 12, 2);
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamp('paid_at')->nullable();
             $table->timestamps();
 
-            $table->index('booking_slug');
+            $table->index('booking_code');
             $table->index('status');
         });
     }

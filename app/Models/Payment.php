@@ -11,7 +11,7 @@ class Payment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'payment_slug', 'booking_slug', 'paystack_reference', 'paystack_access_code',
+        'payment_slug', 'booking_code', 'paystack_reference', 'paystack_access_code',
         'amount', 'currency', 'status', 'payment_url', 'paystack_response', 'paid_at',
     ];
 
@@ -28,6 +28,6 @@ class Payment extends Model
 
     public function booking(): BelongsTo
     {
-        return $this->belongsTo(Booking::class, 'booking_slug', 'booking_slug');
+        return $this->belongsTo(Booking::class, 'booking_code', 'booking_code');
     }
 }

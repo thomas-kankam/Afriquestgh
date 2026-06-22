@@ -13,10 +13,26 @@ class Booking extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'booking_slug', 'client_slug', 'booked_by_type', 'booked_by_slug', 'tour_slug',
-        'booking_type', 'selected_date', 'travelers', 'payment_mode', 'payment_status',
-        'amount', 'currency', 'lead_traveler', 'group_details', 'special_requests',
-        'dietary_needs', 'additional_travelers', 'status', 'operator_slug', 'created_by_admin_slug',
+        'booking_code',
+        'client_slug',
+        'booked_by_type',
+        'booked_by_slug',
+        'tour_slug',
+        'booking_type',
+        'selected_date',
+        'travelers',
+        'payment_mode',
+        'payment_status',
+        'amount',
+        'currency',
+        'lead_traveler',
+        'group_details',
+        'special_requests',
+        'dietary_needs',
+        'additional_travelers',
+        'status',
+        'operator_slug',
+        'created_by_admin_slug',
     ];
 
     protected $casts = [
@@ -29,7 +45,7 @@ class Booking extends Model
 
     public function getRouteKeyName(): string
     {
-        return 'booking_slug';
+        return 'booking_code';
     }
 
     public function tour(): BelongsTo
@@ -44,13 +60,13 @@ class Booking extends Model
 
     public function payments(): HasMany
     {
-        return $this->hasMany(Payment::class, 'booking_slug', 'booking_slug');
+        return $this->hasMany(Payment::class, 'booking_code', 'booking_code');
     }
 
     public function toBookingArray(?string $paymentUrl = null): array
     {
         $data = [
-            'bookingSlug' => $this->booking_slug,
+            'bookingCode' => $this->booking_code,
             'clientSlug' => $this->client_slug,
             'bookedByType' => $this->booked_by_type,
             'bookedBySlug' => $this->booked_by_slug,

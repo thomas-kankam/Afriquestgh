@@ -26,8 +26,8 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Route::bind('listing', fn (string $value) => Tour::query()->where('tour_slug', $value)->firstOrFail());
-        Route::bind('booking', fn (string $value) => Booking::query()->where('booking_slug', $value)->firstOrFail());
+        Route::bind('listing', fn(string $value) => Tour::query()->where('tour_slug', $value)->firstOrFail());
+        Route::bind('booking', fn(string $value) => Booking::query()->where('booking_code', $value)->firstOrFail());
 
         $this->configureRateLimiting();
 

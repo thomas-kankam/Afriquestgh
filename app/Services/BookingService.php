@@ -26,7 +26,7 @@ class BookingService
         }
 
         $booking = Booking::create([
-            'booking_slug' => (string) Str::uuid(),
+            'booking_code' => 'AFQ_' . Str::upper(Str::random(6)),
             'client_slug' => $clientSlug,
             'booked_by_type' => $bookedByType,
             'booked_by_slug' => $bookedBySlug,
@@ -57,7 +57,7 @@ class BookingService
                 amount: $amount,
                 currency: $tour->price_currency,
                 metadata: [
-                    'booking_slug' => $booking->booking_slug,
+                    'booking_code' => $booking->booking_code,
                     'tour_slug' => $tour->tour_slug,
                 ]
             );
@@ -66,7 +66,7 @@ class BookingService
 
             Payment::create([
                 'payment_slug' => (string) Str::uuid(),
-                'booking_slug' => $booking->booking_slug,
+                'booking_code' => $booking->booking_code,
                 'paystack_reference' => $initialized['reference'],
                 'paystack_access_code' => $initialized['access_code'],
                 'amount' => $amount,
@@ -92,6 +92,8 @@ class BookingService
             return;
         }
 
+        Log::info('Payment found', ['payment' => $payment]);
+
         $payment->update([
             'status' => 'success',
             'paystack_response' => $paystackData,
@@ -102,6 +104,8 @@ class BookingService
             'payment_status' => 'paid',
             'status' => 'confirmed',
         ]);
+
+        Log::info('Payment updated', ['payment' => $payment]);
     }
 
     protected function calculateAmount(Tour $tour, int $travelers): float

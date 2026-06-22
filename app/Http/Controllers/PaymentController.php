@@ -18,9 +18,11 @@ class PaymentController extends Controller
 
     public function callback(Request $request): JsonResponse
     {
-        $reference = $request->query('reference') ?? $request->input('reference');
+        $reference = $request->query('reference') ?? $request->input('trxref');
+        Log::info('Payment callback', ['reference' => $reference]);
 
         if (! $reference) {
+            Log::info('Payment callback failed', ['request' => $request->all()]);
             return self::apiResponse(true, 'Action Unsuccessful', (string) self::API_FAIL, 'Missing payment reference', []);
         }
 

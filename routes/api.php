@@ -22,8 +22,8 @@ Route::post('listings', [ListingController::class, 'index']);
 Route::get('listings/{listing}', [ListingController::class, 'show']);
 Route::post('contacts', [ContactController::class, 'store']);
 
-Route::post('payment/callback', [PaymentController::class, 'callback']);
-Route::post('payment/webhook', [PaymentController::class, 'webhook']);
+Route::get('payment/callback', [PaymentController::class, 'callback']);
+Route::get('payment/webhook', [PaymentController::class, 'webhook']);
 
 Route::prefix('client')->group(function () {
     Route::post('login', [ClientAuthenticationController::class, 'login']);

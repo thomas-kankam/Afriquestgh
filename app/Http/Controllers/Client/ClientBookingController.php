@@ -24,7 +24,7 @@ class ClientBookingController extends Controller
                 ->latest()
         );
 
-        return self::paginatedApiResponse('Bookings retrieved', $paginator, fn (Booking $booking) => $booking->toBookingArray());
+        return self::paginatedApiResponse('Bookings retrieved', $paginator, fn(Booking $booking) => $booking->toBookingArray());
     }
 
     public function show(Booking $booking): JsonResponse
@@ -39,13 +39,19 @@ class ClientBookingController extends Controller
     public function store(Request $request): JsonResponse
     {
         $request->validate([
+            'bookingType' => 'required|in:group,individual',
             'tourSlug' => 'required|string|exists:tours,tour_slug',
             'selectedDate' => 'required|date',
             'travelers' => 'required|integer|min:1',
             'paymentMode' => 'required|in:online,onsite',
-            'leadTraveler' => 'required|array',
+            'leadTraveler' => 'required|array|min:1',
             'leadTraveler.email' => 'required|email',
+            'groupDetails' => 'nullable|array',
             'amount' => 'required|numeric|min:0',
+            'specialRequests' => 'nullable|string',
+            'dietaryNeeds' => 'nullable|string',
+            'additionalTravelers' => 'nullable|array',
+            'clientSlug' => 'nullable|string|exists:clients,client_slug',
         ]);
 
         $client = request()->user();
@@ -68,10 +74,32 @@ class ClientBookingController extends Controller
     {
         $this->authorizeClientBooking($booking);
 
-        $booking->update($request->only([
-            'special_requests', 'dietary_needs', 'additional_travelers',
-            'specialRequests', 'dietaryNeeds', 'additionalTravelers',
-        ]));
+        if ($booking->payment_mode === 'online') {
+            return self::apiResponse(
+                true,
+                'Action Unsuccessful',
+                (string) self::API_FAIL,
+                'Online bookings cannot be updated. Please create a new booking instead.',
+                []
+            );
+        }
+
+        $data = $request->validate([
+            'special_requests' => 'nullable|string',
+            'dietary_needs' => 'nullable|string',
+            'additional_travelers' => 'nullable|array',
+            'selected_date' => 'sometimes|date',
+            'selectedDate' => 'sometimes|date',
+            'travelers' => 'sometimes|integer|min:1',
+        ]);
+
+        $booking->update(array_filter([
+            'special_requests' => $data['special_requests'] ?? $request->input('specialRequests'),
+            'dietary_needs' => $data['dietary_needs'] ?? $request->input('dietaryNeeds'),
+            'additional_travelers' => $data['additional_travelers'] ?? $request->input('additionalTravelers'),
+            'selected_date' => $data['selected_date'] ?? $data['selectedDate'] ?? null,
+            'travelers' => $data['travelers'] ?? null,
+        ], fn ($value) => $value !== null));
 
         $booking->load('tour');
 

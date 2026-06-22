@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('bookings', function (Blueprint $table) {
             $table->id();
-            $table->string('booking_slug')->unique();
+            $table->string('booking_code')->nullable()->unique();
             $table->string('client_slug')->nullable();
             $table->string('booked_by_type');
             $table->string('booked_by_slug');
@@ -33,7 +33,7 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
-            $table->index('booking_slug');
+            $table->index('booking_code');
             $table->index('client_slug');
             $table->index('tour_slug');
             $table->index('payment_status');
