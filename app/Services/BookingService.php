@@ -19,6 +19,8 @@ class BookingService
     public function create(array $payload, string $bookedByType, string $bookedBySlug, ?string $clientSlug = null): array
     {
         $tour = Tour::query()->where('tour_slug', $payload['tourSlug'] ?? $payload['tour_slug'])->firstOrFail();
+        $bookingType = $payload['bookingType'] ?? $payload['booking_type'] ?? 'group';
+        $payload = $this->normalizePayloadForBookingType($payload, $bookingType);
         $travelers = (int) ($payload['travelers'] ?? 1);
         $paymentMode = $payload['paymentMode'] ?? $payload['payment_mode'] ?? 'onsite';
         $amount = $this->calculateAmount($tour, $travelers);
@@ -34,7 +36,7 @@ class BookingService
             'booked_by_type' => $bookedByType,
             'booked_by_slug' => $bookedBySlug,
             'tour_slug' => $tour->tour_slug,
-            'booking_type' => $payload['bookingType'] ?? $payload['booking_type'] ?? 'group',
+            'booking_type' => $bookingType,
             'selected_date' => $payload['selectedDate'] ?? $payload['selected_date'],
             'travelers' => $travelers,
             'payment_mode' => $paymentMode,
@@ -54,32 +56,7 @@ class BookingService
         $paymentUrl = null;
 
         if ($paymentMode === 'online') {
-            $email = $booking->lead_traveler['email'] ?? 'customer@afriquestgh.com';
-            $initialized = $this->paystack->initializeTransaction(
-                email: $email,
-                amount: $amount,
-                currency: $tour->price_currency,
-                metadata: [
-                    'booking_code' => $booking->booking_code,
-                    'tour_slug' => $tour->tour_slug,
-                ]
-            );
-
-            Log::info('Paystack initialized', ['initialized' => $initialized]);
-
-            Payment::create([
-                'payment_slug' => (string) Str::uuid(),
-                'booking_code' => $booking->booking_code,
-                'paystack_reference' => $initialized['reference'],
-                'paystack_access_code' => $initialized['access_code'],
-                'amount' => $amount,
-                'currency' => $tour->price_currency,
-                'status' => 'pending',
-                'payment_url' => $initialized['authorization_url'],
-                'paystack_response' => $initialized['raw'],
-            ]);
-
-            $paymentUrl = $initialized['authorization_url'];
+            $paymentUrl = $this->initializeOnlinePayment($booking, $tour, $amount);
         }
 
         $booking->load('tour');
@@ -87,6 +64,106 @@ class BookingService
         $this->notifications->notifyBookingCreated($booking);
 
         return $booking->toBookingArray($paymentUrl);
+    }
+
+    public function updateClientBooking(Booking $booking, array $payload): array
+    {
+        if ($booking->payment_mode === 'online') {
+            throw new \RuntimeException('Online bookings cannot be updated. Please create a new booking instead.');
+        }
+
+        $booking->loadMissing('tour');
+        $tour = $booking->tour ?? Tour::query()->where('tour_slug', $booking->tour_slug)->firstOrFail();
+
+        $bookingType = $payload['bookingType'] ?? $payload['booking_type'] ?? $booking->booking_type;
+        $payload = $this->normalizePayloadForBookingType($payload, $bookingType);
+        $travelers = (int) ($payload['travelers'] ?? $booking->travelers);
+        $amount = $this->calculateAmount($tour, $travelers);
+        $paymentMode = $payload['paymentMode'] ?? $payload['payment_mode'] ?? $booking->payment_mode;
+        $switchingToOnline = $paymentMode === 'online' && $booking->payment_mode === 'onsite';
+
+        if ($switchingToOnline) {
+            $providedAmount = $payload['amount'] ?? null;
+
+            if ($providedAmount === null || round((float) $providedAmount, 2) !== $amount) {
+                throw new BookingAmountMismatchException();
+            }
+        }
+
+        $updates = array_filter([
+            'booking_type' => $bookingType !== $booking->booking_type ? $bookingType : null,
+            'selected_date' => $payload['selected_date'] ?? $payload['selectedDate'] ?? null,
+            'travelers' => isset($payload['travelers']) ? $travelers : null,
+            'lead_traveler' => $payload['leadTraveler'] ?? $payload['lead_traveler'] ?? null,
+            'special_requests' => $payload['specialRequests'] ?? $payload['special_requests'] ?? null,
+            'dietary_needs' => $payload['dietaryNeeds'] ?? $payload['dietary_needs'] ?? null,
+        ], fn ($value) => $value !== null);
+
+        if ($bookingType === 'individual') {
+            $updates['group_details'] = null;
+            $updates['additional_travelers'] = [];
+            $updates['travelers'] = 1;
+        } else {
+            if (array_key_exists('groupDetails', $payload) || array_key_exists('group_details', $payload)) {
+                $updates['group_details'] = $payload['groupDetails'] ?? $payload['group_details'];
+            }
+
+            if (array_key_exists('additionalTravelers', $payload) || array_key_exists('additional_travelers', $payload)) {
+                $updates['additional_travelers'] = $payload['additionalTravelers'] ?? $payload['additional_travelers'] ?? [];
+            }
+        }
+
+        if (isset($payload['travelers']) || $switchingToOnline) {
+            $updates['amount'] = $amount;
+        }
+
+        if ($switchingToOnline) {
+            $updates['payment_mode'] = 'online';
+            $updates['payment_status'] = 'pending';
+        }
+
+        $booking->update($updates);
+        $booking->load('tour');
+
+        $paymentUrl = null;
+
+        if ($switchingToOnline) {
+            $paymentUrl = $this->initializeOnlinePayment($booking, $tour, $amount);
+        }
+
+        $this->notifications->notifyBookingUpdated($booking);
+
+        return $booking->toBookingArray($paymentUrl);
+    }
+
+    protected function initializeOnlinePayment(Booking $booking, Tour $tour, float $amount): string
+    {
+        $email = $booking->lead_traveler['email'] ?? 'customer@afriquestgh.com';
+        $initialized = $this->paystack->initializeTransaction(
+            email: $email,
+            amount: $amount,
+            currency: $tour->price_currency,
+            metadata: [
+                'booking_code' => $booking->booking_code,
+                'tour_slug' => $tour->tour_slug,
+            ]
+        );
+
+        Log::info('Paystack initialized', ['initialized' => $initialized]);
+
+        Payment::create([
+            'payment_slug' => (string) Str::uuid(),
+            'booking_code' => $booking->booking_code,
+            'paystack_reference' => $initialized['reference'],
+            'paystack_access_code' => $initialized['access_code'],
+            'amount' => $amount,
+            'currency' => $tour->price_currency,
+            'status' => 'pending',
+            'payment_url' => $initialized['authorization_url'],
+            'paystack_response' => $initialized['raw'],
+        ]);
+
+        return $initialized['authorization_url'];
     }
 
     public function markPaidByReference(string $reference, array $paystackData): void
@@ -142,6 +219,21 @@ class BookingService
     public function calculateAmountForTour(Tour $tour, int $travelers): float
     {
         return $this->calculateAmount($tour, $travelers);
+    }
+
+    protected function normalizePayloadForBookingType(array $payload, string $bookingType): array
+    {
+        if ($bookingType !== 'individual') {
+            return $payload;
+        }
+
+        $payload['travelers'] = 1;
+        $payload['groupDetails'] = null;
+        $payload['group_details'] = null;
+        $payload['additionalTravelers'] = [];
+        $payload['additional_travelers'] = [];
+
+        return $payload;
     }
 
     protected function calculateAmount(Tour $tour, int $travelers): float

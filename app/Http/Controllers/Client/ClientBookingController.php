@@ -4,18 +4,15 @@ namespace App\Http\Controllers\Client;
 
 use App\Exceptions\BookingAmountMismatchException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Client\ClientBookingRules;
 use App\Models\Booking;
-use App\Services\BookingNotificationService;
 use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ClientBookingController extends Controller
 {
-    public function __construct(
-        protected BookingService $bookingService,
-        protected BookingNotificationService $bookingNotifications,
-    ) {}
+    public function __construct(protected BookingService $bookingService) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -42,21 +39,9 @@ class ClientBookingController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $request->validate([
-            'bookingType' => 'required|in:group,individual',
-            'tourSlug' => 'required|string|exists:tours,tour_slug',
-            'selectedDate' => 'required|date',
-            'travelers' => 'required|integer|min:1',
-            'paymentMode' => 'required|in:online,onsite',
-            'leadTraveler' => 'required|array|min:1',
-            'leadTraveler.email' => 'required|email',
-            'groupDetails' => 'nullable|array',
-            'amount' => 'required|numeric|min:0',
-            'specialRequests' => 'nullable|string',
-            'dietaryNeeds' => 'nullable|string',
-            'additionalTravelers' => 'nullable|array',
-            'clientSlug' => 'nullable|string|exists:clients,client_slug',
-        ]);
+        $bookingType = $request->input('bookingType', $request->input('booking_type', 'group'));
+
+        $request->validate(ClientBookingRules::store($bookingType));
 
         $client = request()->user();
 
@@ -78,58 +63,19 @@ class ClientBookingController extends Controller
     {
         $this->authorizeClientBooking($booking);
 
-        if ($booking->payment_mode === 'online') {
-            return self::apiResponse(
-                true,
-                'Action Unsuccessful',
-                (string) self::API_FAIL,
-                'Online bookings cannot be updated. Please create a new booking instead.',
-                []
-            );
+        $bookingType = $request->input('bookingType', $request->input('booking_type', $booking->booking_type));
+
+        $request->validate(ClientBookingRules::update($bookingType));
+
+        try {
+            $result = $this->bookingService->updateClientBooking($booking, $request->all());
+        } catch (BookingAmountMismatchException $e) {
+            return self::apiResponse(true, 'Action Unsuccessful', (string) self::API_BAD_REQUEST, $e->getMessage(), []);
+        } catch (\RuntimeException $e) {
+            return self::apiResponse(true, 'Action Unsuccessful', (string) self::API_FAIL, $e->getMessage(), []);
         }
 
-        $data = $request->validate([
-            'bookingType' => 'sometimes|in:group,individual',
-            'selectedDate' => 'sometimes|date',
-            'travelers' => 'sometimes|integer|min:1',
-            'leadTraveler' => 'sometimes|array|min:1',
-            'leadTraveler.email' => 'sometimes|email',
-            'groupDetails' => 'nullable|array',
-            'special_requests' => 'nullable|string',
-            'dietary_needs' => 'nullable|string',
-            'additional_travelers' => 'nullable|array',
-            'specialRequests' => 'nullable|string',
-            'dietaryNeeds' => 'nullable|string',
-            'additionalTravelers' => 'nullable|array',
-        ]);
-
-        $booking->loadMissing('tour');
-
-        $updates = array_filter([
-            'booking_type' => $data['bookingType'] ?? $request->input('bookingType'),
-            'selected_date' => $data['selectedDate'] ?? $request->input('selectedDate') ?? null,
-            'travelers' => $data['travelers'] ?? null,
-            'lead_traveler' => $data['leadTraveler'] ?? $request->input('leadTraveler'),
-            'group_details' => $data['groupDetails'] ?? $request->input('groupDetails'),
-            'special_requests' => $data['specialRequests'] ?? $request->input('specialRequests'),
-            'dietary_needs' => $data['dietary_needs'] ?? $request->input('dietaryNeeds'),
-            'additional_travelers' => $data['additionalTravelers'] ?? $request->input('additionalTravelers'),
-        ], fn($value) => $value !== null);
-
-        if (isset($updates['travelers']) && $booking->tour) {
-            $updates['amount'] = $this->bookingService->calculateAmountForTour(
-                $booking->tour,
-                (int) $updates['travelers']
-            );
-        }
-
-        $booking->update($updates);
-
-        $booking->load('tour');
-
-        $this->bookingNotifications->notifyBookingUpdated($booking);
-
-        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Booking updated', $booking->toBookingArray());
+        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Booking updated', $result);
     }
 
     public function destroy(Booking $booking): JsonResponse
