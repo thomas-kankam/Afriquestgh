@@ -91,7 +91,6 @@ class ClientBookingController extends Controller
         $data = $request->validate([
             'bookingType' => 'sometimes|in:group,individual',
             'selectedDate' => 'sometimes|date',
-            'selected_date' => 'sometimes|date',
             'travelers' => 'sometimes|integer|min:1',
             'leadTraveler' => 'sometimes|array|min:1',
             'leadTraveler.email' => 'sometimes|email',
@@ -108,14 +107,14 @@ class ClientBookingController extends Controller
 
         $updates = array_filter([
             'booking_type' => $data['bookingType'] ?? $request->input('bookingType'),
-            'selected_date' => $data['selected_date'] ?? $data['selectedDate'] ?? null,
+            'selected_date' => $data['selectedDate'] ?? $request->input('selectedDate') ?? null,
             'travelers' => $data['travelers'] ?? null,
             'lead_traveler' => $data['leadTraveler'] ?? $request->input('leadTraveler'),
             'group_details' => $data['groupDetails'] ?? $request->input('groupDetails'),
-            'special_requests' => $data['special_requests'] ?? $request->input('specialRequests'),
+            'special_requests' => $data['specialRequests'] ?? $request->input('specialRequests'),
             'dietary_needs' => $data['dietary_needs'] ?? $request->input('dietaryNeeds'),
-            'additional_travelers' => $data['additional_travelers'] ?? $request->input('additionalTravelers'),
-        ], fn ($value) => $value !== null);
+            'additional_travelers' => $data['additionalTravelers'] ?? $request->input('additionalTravelers'),
+        ], fn($value) => $value !== null);
 
         if (isset($updates['travelers']) && $booking->tour) {
             $updates['amount'] = $this->bookingService->calculateAmountForTour(
