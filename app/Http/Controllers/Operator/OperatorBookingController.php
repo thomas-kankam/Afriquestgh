@@ -7,13 +7,17 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Client;
 use App\Models\Tour;
+use App\Services\BookingNotificationService;
 use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class OperatorBookingController extends Controller
 {
-    public function __construct(protected BookingService $bookingService) {}
+    public function __construct(
+        protected BookingService $bookingService,
+        protected BookingNotificationService $bookingNotifications,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -112,6 +116,8 @@ class OperatorBookingController extends Controller
         ], fn ($value) => $value !== null));
 
         $booking->load('tour');
+
+        $this->bookingNotifications->notifyBookingUpdated($booking);
 
         return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Booking updated', $booking->toBookingArray());
     }

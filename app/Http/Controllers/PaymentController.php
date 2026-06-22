@@ -31,10 +31,12 @@ class PaymentController extends Controller
 
             if (($data['status'] ?? '') === 'success') {
                 $this->bookingService->markPaidByReference($reference, $data);
+            } else {
+                $this->bookingService->markFailedByReference($reference, $data);
             }
 
             $payment = Payment::query()->where('paystack_reference', $reference)->with('booking.tour')->first();
-            Log::info('Payment verified', ['payment' => $payment]);
+            // Log::info('Payment verified', ['payment' => $payment]);
             return self::apiResponse(
                 false,
                 'Action Successful',
@@ -65,6 +67,10 @@ class PaymentController extends Controller
 
         if ($event === 'charge.success' && ! empty($data['reference'])) {
             $this->bookingService->markPaidByReference($data['reference'], $data);
+        }
+
+        if (in_array($event, ['charge.failed', 'payment.failed'], true) && ! empty($data['reference'])) {
+            $this->bookingService->markFailedByReference($data['reference'], $data);
         }
 
         return response()->json(['message' => 'Webhook received']);

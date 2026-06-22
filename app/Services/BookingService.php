@@ -11,7 +11,10 @@ use Illuminate\Support\Str;
 
 class BookingService
 {
-    public function __construct(protected PaystackService $paystack) {}
+    public function __construct(
+        protected PaystackService $paystack,
+        protected BookingNotificationService $notifications,
+    ) {}
 
     public function create(array $payload, string $bookedByType, string $bookedBySlug, ?string $clientSlug = null): array
     {
@@ -81,14 +84,16 @@ class BookingService
 
         $booking->load('tour');
 
+        $this->notifications->notifyBookingCreated($booking);
+
         return $booking->toBookingArray($paymentUrl);
     }
 
     public function markPaidByReference(string $reference, array $paystackData): void
     {
-        $payment = Payment::query()->where('paystack_reference', $reference)->first();
+        $payment = Payment::query()->where('paystack_reference', $reference)->with('booking.tour')->first();
 
-        if (! $payment) {
+        if (! $payment || $payment->status === 'success') {
             return;
         }
 
@@ -105,7 +110,33 @@ class BookingService
             'status' => 'confirmed',
         ]);
 
+        if ($payment->booking) {
+            $this->notifications->notifyPaymentSuccess($payment->booking);
+        }
+
         Log::info('Payment updated', ['payment' => $payment]);
+    }
+
+    public function markFailedByReference(string $reference, array $paystackData): void
+    {
+        $payment = Payment::query()->where('paystack_reference', $reference)->with('booking.tour')->first();
+
+        if (! $payment || in_array($payment->status, ['success', 'failed'], true)) {
+            return;
+        }
+
+        $payment->update([
+            'status' => 'failed',
+            'paystack_response' => $paystackData,
+        ]);
+
+        $payment->booking?->update([
+            'payment_status' => 'failed',
+        ]);
+
+        if ($payment->booking) {
+            $this->notifications->notifyPaymentFailed($payment->booking);
+        }
     }
 
     protected function calculateAmount(Tour $tour, int $travelers): float

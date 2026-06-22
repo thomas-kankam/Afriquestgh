@@ -38,4 +38,11 @@ return [
         'webhook_url' => env('PAYSTACK_WEBHOOK_URL', env('APP_URL').'/api/payment/webhook'),
     ],
 
+    'sms' => [
+        'enabled' => env('SMS_ENABLED', false),
+        'api_key' => env('SMS_API_KEY'),
+        'sender_id' => env('SMS_SENDER_ID', 'AfriQwest'),
+        'endpoint' => env('SMS_ENDPOINT', 'https://sms.arkesel.com/api/v2/sms/send'),
+    ],
+
 ];

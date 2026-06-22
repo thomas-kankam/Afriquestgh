@@ -58,6 +58,11 @@ class Booking extends Model
         return $this->belongsTo(Client::class, 'client_slug', 'client_slug');
     }
 
+    public function operator(): BelongsTo
+    {
+        return $this->belongsTo(Operator::class, 'operator_slug', 'operator_slug');
+    }
+
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class, 'booking_code', 'booking_code');

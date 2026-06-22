@@ -57,11 +57,11 @@ class PaystackService
         $body = $response->json();
 
         if (! $response->successful() || ! ($body['status'] ?? false)) {
-            Log::info('Paystack verification failed', ['verified' => $body]);
+            // Log::info('Paystack verification failed', ['verified' => $body]);
             throw new \RuntimeException($body['message'] ?? 'Paystack verification failed');
         }
 
-        Log::info('Paystack verified', ['verified' => $body]);
+        // Log::info('Paystack verified', ['verified' => $body]);
 
         return $body['data'] ?? [];
     }
@@ -69,7 +69,7 @@ class PaystackService
     public function validateWebhookSignature(string $payload, ?string $signature): bool
     {
         if (! $signature) {
-            Log::info('Paystack webhook signature validation failed', ['signature' => $signature]);
+            // Log::info('Paystack webhook signature validation failed', ['signature' => $signature]);
             return false;
         }
 
