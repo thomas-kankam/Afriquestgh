@@ -95,7 +95,7 @@ class Tour extends Model
 
     public function toListingArray(): array
     {
-        return [
+        $data = [
             'slug' => $this->tour_slug,
             'name' => $this->name,
             'locations' => $this->locations ?? [],
@@ -128,5 +128,11 @@ class Tour extends Model
             'createdAt' => $this->created_at,
             'updatedAt' => $this->updated_at,
         ];
+
+        if ($this->relationLoaded('operator') && $this->operator) {
+            $data['operator'] = $this->operator->toOperatorArray();
+        }
+
+        return $data;
     }
 }

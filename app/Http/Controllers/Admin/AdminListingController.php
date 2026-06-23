@@ -14,7 +14,7 @@ class AdminListingController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $query = Tour::query();
+        $query = Tour::query()->with('operator');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -22,11 +22,13 @@ class AdminListingController extends Controller
 
         $paginator = self::paginateQuery($request, $query->latest());
 
-        return self::paginatedApiResponse('Listings retrieved', $paginator, fn (Tour $tour) => $tour->toListingArray());
+        return self::paginatedApiResponse('Listings retrieved', $paginator, fn(Tour $tour) => $tour->toListingArray());
     }
 
     public function show(Tour $listing): JsonResponse
     {
+        $listing->load('operator');
+
         return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Listing retrieved', $listing->toListingArray());
     }
 

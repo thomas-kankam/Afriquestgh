@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\AdminBookingController;
 use App\Http\Controllers\Admin\AdminClientController;
 use App\Http\Controllers\Admin\AdminContactController;
 use App\Http\Controllers\Admin\AdminListingController;
+use App\Http\Controllers\Admin\AdminOperatorController;
+use App\Http\Controllers\Admin\AdminPaymentController;
 use App\Http\Controllers\Admin\AdminPermissionController;
 use App\Http\Controllers\Admin\AdminRoleController;
 use App\Http\Controllers\Admin\AdminUserController;
@@ -92,26 +94,26 @@ Route::prefix('admin')->group(function () {
         Route::middleware('admin.permission:listing_management')->group(function () {
             Route::get('listings', [AdminListingController::class, 'index']);
             Route::get('listings/{listing}', [AdminListingController::class, 'show']);
-            Route::post('listings', [AdminListingController::class, 'store']);
-            Route::put('listings/{listing}', [AdminListingController::class, 'update']);
-            Route::patch('listings/{listing}/status', [AdminListingController::class, 'updateStatus']);
-            Route::delete('listings/{listing}', [AdminListingController::class, 'destroy']);
+            // Route::post('listings', [AdminListingController::class, 'store']);
+            // Route::put('listings/{listing}', [AdminListingController::class, 'update']);
+            // Route::patch('listings/{listing}/status', [AdminListingController::class, 'updateStatus']);
+            // Route::delete('listings/{listing}', [AdminListingController::class, 'destroy']);
         });
 
         Route::middleware('admin.permission:booking_management')->group(function () {
             Route::get('bookings', [AdminBookingController::class, 'index']);
             Route::get('bookings/{booking}', [AdminBookingController::class, 'show']);
-            Route::post('bookings', [AdminBookingController::class, 'store']);
-            Route::put('bookings/{booking}', [AdminBookingController::class, 'update']);
-            Route::delete('bookings/{booking}', [AdminBookingController::class, 'destroy']);
+            // Route::post('bookings', [AdminBookingController::class, 'store']);
+            // Route::put('bookings/{booking}', [AdminBookingController::class, 'update']);
+            // Route::delete('bookings/{booking}', [AdminBookingController::class, 'destroy']);
         });
 
         Route::middleware('admin.permission:client_management')->group(function () {
             Route::get('clients', [AdminClientController::class, 'index']);
             Route::get('clients/{client}', [AdminClientController::class, 'show']);
-            Route::post('clients', [AdminClientController::class, 'store']);
-            Route::put('clients/{client}', [AdminClientController::class, 'update']);
-            Route::delete('clients/{client}', [AdminClientController::class, 'destroy']);
+            // Route::post('clients', [AdminClientController::class, 'store']);
+            // Route::put('clients/{client}', [AdminClientController::class, 'update']);
+            // Route::delete('clients/{client}', [AdminClientController::class, 'destroy']);
         });
 
         Route::middleware('admin.permission:user_management')->group(function () {
@@ -141,5 +143,13 @@ Route::prefix('admin')->group(function () {
             Route::put('contacts/{contact}', [AdminContactController::class, 'update']);
             Route::delete('contacts/{contact}', [AdminContactController::class, 'destroy']);
         });
+
+        // Payments
+        Route::get('payments', [AdminPaymentController::class, 'index']);
+        Route::get('payments/{payment}', [AdminPaymentController::class, 'show']);
+
+        // Operators
+        Route::get('operators', [AdminOperatorController::class, 'index']);
+        Route::get('operators/{operator}', [AdminOperatorController::class, 'show']);
     });
 });

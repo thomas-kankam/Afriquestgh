@@ -102,6 +102,14 @@ class Booking extends Model
             $data['tour'] = $this->tour->toListingArray();
         }
 
+        if ($this->relationLoaded('client') && $this->client) {
+            $data['client'] = $this->client->toArray();
+        }
+
+        if ($this->relationLoaded('operator') && $this->operator) {
+            $data['operator'] = $this->operator->toOperatorArray();
+        }
+
         return $data;
     }
 }
