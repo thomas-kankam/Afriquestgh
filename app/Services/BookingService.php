@@ -138,18 +138,7 @@ class BookingService
 
     protected function initializeOnlinePayment(Booking $booking, Tour $tour, float $amount): string
     {
-        $email = $booking->lead_traveler['email'] ?? 'customer@afriquestgh.com';
-        $initialized = $this->paystack->initializeTransaction(
-            email: $email,
-            amount: $amount,
-            currency: $tour->price_currency,
-            metadata: [
-                'booking_code' => $booking->booking_code,
-                'tour_slug' => $tour->tour_slug,
-            ]
-        );
-
-        Log::info('Paystack initialized', ['initialized' => $initialized]);
+        $initialized = $this->initializePaystackTransaction($booking, $tour, $amount);
 
         Payment::create([
             'payment_slug' => (string) Str::uuid(),
@@ -164,6 +153,42 @@ class BookingService
         ]);
 
         return $initialized['authorization_url'];
+    }
+
+    protected function reinitializeOnlinePayment(Payment $payment, Booking $booking, Tour $tour, float $amount): string
+    {
+        $initialized = $this->initializePaystackTransaction($booking, $tour, $amount);
+
+        $payment->update([
+            'paystack_reference' => $initialized['reference'],
+            'paystack_access_code' => $initialized['access_code'],
+            'amount' => $amount,
+            'currency' => $tour->price_currency,
+            'status' => 'pending',
+            'payment_url' => $initialized['authorization_url'],
+            'paystack_response' => $initialized['raw'],
+            'paid_at' => null,
+        ]);
+
+        return $initialized['authorization_url'];
+    }
+
+    protected function initializePaystackTransaction(Booking $booking, Tour $tour, float $amount): array
+    {
+        $email = $booking->lead_traveler['email'] ?? 'customer@afriquestgh.com';
+        $initialized = $this->paystack->initializeTransaction(
+            email: $email,
+            amount: $amount,
+            currency: $tour->price_currency,
+            metadata: [
+                'booking_code' => $booking->booking_code,
+                'tour_slug' => $tour->tour_slug,
+            ]
+        );
+
+        Log::info('Paystack initialized', ['initialized' => $initialized]);
+
+        return $initialized;
     }
 
     public function markPaidByReference(string $reference, array $paystackData): void
@@ -238,20 +263,14 @@ class BookingService
 
         $amount = $this->calculateAmount($booking->tour, (int) $booking->travelers);
 
-        $this->initializeOnlinePayment($booking, $booking->tour, $amount);
+        $this->reinitializeOnlinePayment($payment, $booking, $booking->tour, $amount);
 
         $booking->update([
             'payment_status' => 'pending',
             'amount' => $amount,
         ]);
 
-        $latestPayment = Payment::query()
-            ->where('booking_code', $booking->booking_code)
-            ->latest('id')
-            ->with('booking.tour')
-            ->firstOrFail();
-
-        return $latestPayment->toPaymentArray();
+        return $payment->fresh(['booking.tour'])->toPaymentArray();
     }
 
     public function calculateAmountForTour(Tour $tour, int $travelers): float
