@@ -20,6 +20,7 @@ use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('listings', [ListingController::class, 'index']);
+Route::get('listings/random', [ListingController::class, 'random']);
 Route::get('listings/{listing}', [ListingController::class, 'show']);
 Route::post('contacts', [ContactController::class, 'store']);
 

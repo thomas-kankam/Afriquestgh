@@ -37,6 +37,21 @@ class ListingController extends Controller
         return self::paginatedApiResponse('Listings retrieved', $paginator, fn(Tour $tour) => $tour->toListingArray());
     }
 
+    public function random(): JsonResponse
+    {
+        $listings = Tour::query()
+            ->published()
+            ->whereNotNull('operator_slug')
+            ->inRandomOrder()
+            ->limit(8)
+            ->get()
+            ->map(fn (Tour $tour) => $tour->toListingArray())
+            ->values()
+            ->all();
+
+        return self::apiResponse(false, 'Action Successful', (string) self::API_SUCCESS, 'Random listings retrieved', $listings);
+    }
+
     public function show(Tour $listing): JsonResponse
     {
         if ($listing->status !== 'published') {
