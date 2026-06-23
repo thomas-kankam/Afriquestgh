@@ -16,6 +16,7 @@ use App\Http\Controllers\ListingController;
 use App\Http\Controllers\Operator\OperatorAuthenticationController;
 use App\Http\Controllers\Operator\OperatorBookingController;
 use App\Http\Controllers\Operator\OperatorListingController;
+use App\Http\Controllers\Operator\OperatorPaymentController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
@@ -68,9 +69,14 @@ Route::prefix('operator')->group(function () {
 
         Route::get('bookings', [OperatorBookingController::class, 'index']);
         Route::get('bookings/{booking}', [OperatorBookingController::class, 'show']);
-        Route::post('bookings', [OperatorBookingController::class, 'store']);
-        Route::put('bookings/{booking}', [OperatorBookingController::class, 'update']);
-        Route::delete('bookings/{booking}', [OperatorBookingController::class, 'destroy']);
+        // Route::post('bookings', [OperatorBookingController::class, 'store']);
+        // Route::put('bookings/{booking}', [OperatorBookingController::class, 'update']);
+        // Route::delete('bookings/{booking}', [OperatorBookingController::class, 'destroy']);
+
+        // Payments
+        Route::get('payments', [OperatorPaymentController::class, 'index']);
+        Route::get('payments/{payment}', [OperatorPaymentController::class, 'show']);
+        Route::post('payments', [OperatorPaymentController::class, 'store']);
     });
 });
 

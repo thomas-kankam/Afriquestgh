@@ -44,6 +44,7 @@ class Payment extends Model
         $data = [
             'paymentSlug' => $this->payment_slug,
             'bookingCode' => $this->booking_code,
+            'paymentMethod' => $this->paymentMethod(),
             'reference' => $this->paystack_reference,
             'amount' => (float) $this->amount,
             'currency' => $this->currency,
@@ -64,6 +65,11 @@ class Payment extends Model
     public function apiStatus(): string
     {
         return $this->status === 'success' ? 'paid' : $this->status;
+    }
+
+    public function paymentMethod(): string
+    {
+        return $this->paystack_reference ? 'online' : 'onsite';
     }
 
     public static function statusFilterValue(string $status): ?string

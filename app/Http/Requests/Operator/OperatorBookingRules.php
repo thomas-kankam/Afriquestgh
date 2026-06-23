@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Client;
+namespace App\Http\Requests\Operator;
 
 use App\Http\Requests\Booking\SharedBookingRules;
 
-class ClientBookingRules
+class OperatorBookingRules
 {
     public static function store(string $bookingType): array
     {
@@ -14,6 +14,7 @@ class ClientBookingRules
             'paymentMode' => 'required|in:online,onsite',
             'amount' => 'required|numeric|min:0',
             'clientSlug' => 'nullable|string|exists:clients,client_slug',
+            'client_slug' => 'nullable|string|exists:clients,client_slug',
         ]);
     }
 
@@ -29,6 +30,9 @@ class ClientBookingRules
             'additional_travelers' => 'nullable|array',
             'specialRequests' => 'nullable|string',
             'dietaryNeeds' => 'nullable|string',
+            'status' => 'sometimes|string|in:pending,confirmed,cancelled',
+            'payment_status' => 'sometimes|string|in:pending,paid,failed,onsite',
+            'paymentStatus' => 'sometimes|string|in:pending,paid,failed,onsite',
         ]);
     }
 }
