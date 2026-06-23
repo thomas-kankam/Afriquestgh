@@ -26,7 +26,7 @@ class PaymentController extends Controller
         if (! $reference) {
             Log::info('Payment callback failed', ['request' => $request->all()]);
 
-            return $this->redirectWithApiResponse($frontendUrl, true, 'Action Unsuccessful', (string) self::API_FAIL, 'Missing payment reference', []);
+            return $this->redirectToPaymentResult($frontendUrl, success: false);
         }
 
         try {
@@ -39,58 +39,62 @@ class PaymentController extends Controller
                 $this->bookingService->markFailedByReference($reference, $data);
             }
 
-            $payment = Payment::query()->where('paystack_reference', $reference)->with('booking.tour')->first();
-            $booking = $payment?->booking;
-
-            $isSuccess = $paymentStatus === 'success';
-
-            return $this->redirectWithApiResponse(
-                $frontendUrl,
-                $isSuccess,
-                $isSuccess ? 'Action Successful' : 'Action Unsuccessful',
-                (string) ($isSuccess ? self::API_SUCCESS : self::API_FAIL),
-                $isSuccess ? 'Payment verified' : 'Payment failed',
-                [
-                    'reference' => $reference,
-                    'status' => $paymentStatus,
-                    'booking' => $booking?->toBookingArray(),
-                ]
-            );
+            return $this->redirectToPaymentResult($frontendUrl, success: $paymentStatus === 'success', reference: $reference);
         } catch (\Throwable $e) {
             Log::error('Payment callback error', [
                 'reference' => $reference,
                 'error' => $e->getMessage(),
             ]);
 
-            return $this->redirectWithApiResponse($frontendUrl, true, 'Action Unsuccessful', (string) self::API_FAIL, $e->getMessage(), [
-                'reference' => $reference,
-                'status' => 'failed',
-            ]);
+            return $this->redirectToPaymentResult($frontendUrl, success: false, reference: $reference);
         }
     }
 
-    protected function redirectWithApiResponse(
-        string $frontendUrl,
-        bool $inError,
-        string $message,
-        int|string $statusCode,
-        string $reason,
-        ?array $data = [],
-    ): RedirectResponse {
-        $payload = [
-            'data' => [
-                'status_code' => (string) $statusCode,
-                'message' => $message,
-                'in_error' => $inError,
-                'reason' => $reason,
-                'data' => $data ?? [],
-                'point_in_time' => now(),
-            ],
-        ];
+    public function verify(Request $request): JsonResponse
+    {
+        $reference = $request->query('ref') ?? $request->query('reference');
 
-        return redirect()->away(
-            $frontendUrl . '?response=' . urlencode(base64_encode(json_encode($payload)))
+        if (! $reference) {
+            return self::apiResponse(true, 'Action Unsuccessful', (string) self::API_FAIL, 'Missing payment reference', []);
+        }
+
+        $payment = Payment::query()
+            ->where('paystack_reference', $reference)
+            ->with('booking.tour')
+            ->first();
+
+        if (! $payment) {
+            return self::apiResponse(true, 'Action Unsuccessful', (string) self::API_NOT_FOUND, 'Payment not found', []);
+        }
+
+        $booking = $payment->booking;
+        $isSuccess = $payment->status === 'success';
+
+        return self::apiResponse(
+            ! $isSuccess,
+            $isSuccess ? 'Action Successful' : 'Action Unsuccessful',
+            (string) ($isSuccess ? self::API_SUCCESS : self::API_FAIL),
+            $isSuccess ? 'Payment verified' : 'Payment failed',
+            [
+                'reference' => $reference,
+                'status' => $isSuccess ? 'success' : ($payment->status === 'pending' ? 'pending' : 'failed'),
+                'payment' => $payment->toPaymentArray(),
+                'booking' => $booking?->toBookingArray(),
+                'tour' => $booking?->tour?->toListingArray(),
+            ]
         );
+    }
+
+    protected function redirectToPaymentResult(string $frontendUrl, bool $success, ?string $reference = null): RedirectResponse
+    {
+        $path = $success ? '/payment/success' : '/payment/failure';
+        $url = $frontendUrl . $path;
+
+        if ($reference) {
+            $url .= '?ref=' . urlencode($reference);
+        }
+
+        return redirect()->away($url);
     }
 
     public function webhook(Request $request): JsonResponse
