@@ -75,13 +75,7 @@ class PaymentController extends Controller
             $isSuccess ? 'Action Successful' : 'Action Unsuccessful',
             (string) ($isSuccess ? self::API_SUCCESS : self::API_FAIL),
             $isSuccess ? 'Payment verified' : 'Payment failed',
-            [
-                'reference' => $reference,
-                'status' => $isSuccess ? 'success' : ($payment->status === 'pending' ? 'pending' : 'failed'),
-                'payment' => $payment->toPaymentArray(),
-                'booking' => $booking?->toBookingArray(),
-                'tour' => $booking?->tour?->toListingArray(),
-            ]
+            $payment->toPaymentArray(),
         );
     }
 
